@@ -17,7 +17,7 @@ namespace Keyboard {
     static uint16_t buffer[SCE_IME_DIALOG_MAX_TEXT_LENGTH];
     std::string text = std::string();
 
-    int Init(const std::string &title) {
+    int Init(const std::string &title, bool password = false) {
         if (running)
             return -1;
 
@@ -34,6 +34,9 @@ namespace Keyboard {
         param.languagesForced = SCE_TRUE;
         param.type = SCE_IME_TYPE_DEFAULT;
         param.option = 0;
+        if(password) {
+            param.textBoxMode = SCE_IME_DIALOG_TEXTBOX_MODE_PASSWORD;
+        }
             
         param.title = reinterpret_cast<const SceWChar16 *>(title_u16.c_str());
         param.maxTextLength = SCE_IME_DIALOG_MAX_TEXT_LENGTH;
@@ -72,8 +75,8 @@ namespace Keyboard {
         return status;
     }
 
-    std::string GetText(const std::string &title) {
-        if(Init(title) != 0) {
+    std::string GetText(const std::string &title, bool password) {
+        if(Init(title, password) != 0) {
             return std::string();
         }
         

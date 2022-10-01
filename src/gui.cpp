@@ -48,8 +48,8 @@ ImFont* AddDefaultFont( float pixel_size ) {
     return font;
 }
 
-bool textInput(const char *prompt, const char *hint, char *buffer, size_t len) {
-    std::string text = Keyboard::GetText(prompt);
+bool textInput(const char *prompt, const char *hint, char *buffer, size_t len, bool password = false) {
+    std::string text = Keyboard::GetText(prompt, password);
     if(text.length() == 0 && hint) {
         strncpy(buffer, hint, len);
         return false;
@@ -100,7 +100,7 @@ void TextInput::draw(ImVec2 size) {
     ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, text_align);
 
     if (ButtonCenteredOnLine(buffer, align, size)) {
-        set = textInput(prompt, hint, buffer, MAX_CREDENTIAL_LEN);
+        set = textInput(prompt, hint, buffer, MAX_CREDENTIAL_LEN, password);
     }
     ImGui::PopStyleColor(); // ImGuiCol_Text
     ImGui::PopStyleVar(); // ImGuiStyleVar_ButtonTextAlign
@@ -227,7 +227,7 @@ LoginScreen::LoginScreen(GUI *gui) : Screen(gui) {
     bool ret = LoadTextureFromFile("icon_alpha.png", &logo_tex, &logo_width, &logo_height);
 
     username = TextInput(ImVec2(0.0f, 0.5f), 0.5f, ENTER_USERNAME_PROMPT, INPUT_USERNAME_HINT);
-    password = TextInput(ImVec2(0.0f, 0.5f), 0.5f, ENTER_PASSWORD_PROMPT, INPUT_PASSWORD_HINT);
+    password = TextInput(ImVec2(0.0f, 0.5f), 0.5f, ENTER_PASSWORD_PROMPT, INPUT_PASSWORD_HINT, true);
 }
 
 void start_cspot_thread(GUI *gui);

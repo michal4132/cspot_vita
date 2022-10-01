@@ -12,12 +12,13 @@
 class TextInput {
   public:
     TextInput() {};
-    TextInput(ImVec2 text_align, float align, const char *prompt, const char *hint)
-     : text_align(text_align), align(align), prompt(prompt), hint(hint) {
+    TextInput(ImVec2 text_align, float align, const char *prompt, const char *hint, bool password = false)
+     : text_align(text_align), align(align), prompt(prompt), hint(hint), password(password) {
         strncpy(buffer, hint, MAX_CREDENTIAL_LEN);
      };
     void draw(ImVec2 size);
     char buffer[MAX_CREDENTIAL_LEN];
+    bool password;
     bool set = false;
     ImVec2 text_align;
     float align;
