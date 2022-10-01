@@ -20,7 +20,7 @@ add_custom_command(
 
 add_custom_target(run ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/boot_param.bin)
 
-project(appmain C CXX)
+project(cspot_vita C CXX)
 include("${VITASDK}/share/vita.cmake" REQUIRED)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11")
@@ -88,7 +88,7 @@ vita_create_self(eboot.bin
 
 set(VITA_MKSFOEX_FLAGS "${VITA_MKSFOEX_FLAGS} -d ATTRIBUTE=17338376 -d ATTRIBUTE_MINOR=17 -s CATEGORY=gdc")
 
-vita_create_vpk(notification-util.vpk ${VITA_TITLEID} eboot.bin
+vita_create_vpk(${PROJECT_NAME}.vpk ${VITA_TITLEID} eboot.bin
   VERSION ${VITA_VERSION}
   NAME ${VITA_APP_NAME}
   FILE common_data/sce_sys/icon0.png sce_sys/icon0.png
