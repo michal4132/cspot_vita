@@ -89,7 +89,7 @@ void TextCentered(std::string text) {
     ImGui::Text(text.c_str());
 }
 
-bool StyleButton(const char* label, ImVec2 btn_size, bool active) {
+bool StyleButton(const char* label, ImVec2 btn_size, bool active = false) {
     if (active) {
         ImGui::PushStyleColor(ImGuiCol_Button, PLAY_BUTTON_BACKGROUND);
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, PLAY_BUTTON_BACKGROUND);
@@ -188,42 +188,28 @@ void PlaybackScreen::drawPlayer() {
 
     // Backward button
     ImGui::PushFont(gui->icon_font);
-    ImGui::PushStyleColor(ImGuiCol_Button, BACKGROUND_COLOR);
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, BACKGROUND_COLOR);
-    if(ImGui::Button(ICON_FA_STEP_BACKWARD,  ImVec2(100.0f, 100.0f))) {
+    if(StyleButton(ICON_FA_STEP_BACKWARD,  ImVec2(100.0f, 100.0f))) {
         gui->prevCallback();
     }
-    ImGui::PopStyleColor();  // ImGuiCol_ButtonHovered
-    ImGui::PopStyleColor();  // ImGuiCol_Button
     ImGui::PopFont();
 
     ImGui::SameLine();
 
     // Play pause button
     ImGui::PushFont(gui->playback_icon_font);
-    ImGui::PushStyleColor(ImGuiCol_Button, BACKGROUND_COLOR);
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, BACKGROUND_COLOR);
-    ImGui::PushStyleColor(ImGuiCol_Text, PLAY_BUTTON_BACKGROUND);
     const char *playback_icon = gui->isPaused ? ICON_FA_PLAY_CIRCLE "###playpause" : ICON_FA_PAUSE_CIRCLE "###playpause";
-    if(ImGui::Button(playback_icon, ImVec2(100.0f, 100.0f))) {
+    if(StyleButton(playback_icon, ImVec2(100.0f, 100.0f))) {
         gui->playToggleCallback();
     }
-    ImGui::PopStyleColor();  // ImGuiCol_Text
-    ImGui::PopStyleColor();  // ImGuiCol_ButtonHovered
-    ImGui::PopStyleColor();  // ImGuiCol_Button
     ImGui::PopFont();
 
     ImGui::SameLine();
 
     // Forward button
     ImGui::PushFont(gui->icon_font);
-    ImGui::PushStyleColor(ImGuiCol_Button, BACKGROUND_COLOR);
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, BACKGROUND_COLOR);
-    if(ImGui::Button(ICON_FA_STEP_FORWARD, ImVec2(100.0f, 100.0f))) {
+    if(StyleButton(ICON_FA_STEP_FORWARD, ImVec2(100.0f, 100.0f))) {
         gui->nextCallback();
     }
-    ImGui::PopStyleColor();  // ImGuiCol_ButtonHovered
-    ImGui::PopStyleColor();  // ImGuiCol_Button
     ImGui::PopFont();
 
     ImGui::PopStyleVar();  // ImGuiStyleVar_ItemSpacing
