@@ -160,8 +160,15 @@ void start_cspot_thread(GUI *gui) {
     sceKernelStartThread(cspot_id, sizeof(void*), &gui);
 }
 
+int print_to_menu(const char* fmt, ...);
+int vprint_to_menu(const char* fmt, va_list args);
+
 int main(void) {
     bell::setDefaultLogger();
+    bell::disableColors();
+    bell::function_printf = &print_to_menu;
+    bell::function_vprintf = &vprint_to_menu;
+
     GUI gui;
 
     init_network();

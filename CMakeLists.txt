@@ -26,8 +26,15 @@ include("${VITASDK}/share/vita.cmake" REQUIRED)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11")
 set(CMAKE_CXX_STANDARD 17)
 
+# patch CSpot and bell
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/patch/Queue.h
+     DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/cspot/cspot/bell/include)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/patch/ZeroconfAuthenticator.cpp
+     DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/cspot/cspot/src)
 
 # add CSpot sources
+add_compile_definitions(BELL_USE_MBEDTLS)
+add_compile_definitions(VITA)
 add_subdirectory("cspot/cspot" ${CMAKE_CURRENT_BINARY_DIR}/cspot)
 
 include_directories(
@@ -95,4 +102,5 @@ vita_create_vpk(${PROJECT_NAME}.vpk ${VITA_TITLEID} eboot.bin
   FILE common_data/fa-solid-900.ttf fa-solid-900.ttf
   FILE common_data/icon_alpha.png icon_alpha.png
   FILE common_data/ProggyVector.ttf ProggyVector.ttf
+  FILE common_data/cover_art.png cover_art.png
 )
