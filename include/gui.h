@@ -59,9 +59,13 @@ class PlaybackScreen: public Screen {
     void drawButtons();
     void setCoverArt(std::string url);
   private:
-    // TODO: replace with state variable
-    bool enable_log_window = true;
-    bool enable_playlists_window = false;
+    enum class Submenu {
+      LOG,
+      PLAYLISTS,
+      SETTINGS,
+      SEARCH,
+    };
+    Submenu submenu = Submenu::LOG;
     int cover_art_width = 0;
     int cover_art_height = 0;
     GLuint cover_art_tex = 0;
