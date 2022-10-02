@@ -80,6 +80,7 @@ class GUI {
     void start();
     std::atomic<bool> isRunning = true;
     ImFont *font;
+    ImFont *playback_icon_font;
     ImFont *icon_font;
     ImFont *log_font;
     Screen *login_screen = nullptr;

@@ -16,8 +16,10 @@
 #define TEXT_INPUT_BACKGROUND_HOVERED IM_COL32(20,20,20,255)
 #define BACKGROUND_COLOR              ImVec4(0.09f, 0.09f, 0.15f, 1.00f)
 #define WINDOW_FLAGS                  (ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse)
+#define MENU_BUTTON_SIZE              ImVec2(68.0f, 68.0f)
 
-static ImGuiTextBuffer     Buf;
+// Logger buffer
+static ImGuiTextBuffer Buf;
 bool ScrollToBottom;
 
 // override printf for cspot
@@ -161,10 +163,8 @@ void PlaybackScreen::setCoverArt(std::string url) {
 }
 
 void PlaybackScreen::drawPlayer() {
-    ImGui::PushFont(gui->icon_font);
-
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(30.0f, 0.0f));
-
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.00f, 0.00f));
     ImGui::Dummy(ImVec2(0.0f, 28.0f));
 
     // Cover art
@@ -187,43 +187,48 @@ void PlaybackScreen::drawPlayer() {
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 50.0f);
 
     // Backward button
+    ImGui::PushFont(gui->icon_font);
     ImGui::PushStyleColor(ImGuiCol_Button, BACKGROUND_COLOR);
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, BACKGROUND_COLOR);
     if(ImGui::Button(ICON_FA_STEP_BACKWARD,  ImVec2(100.0f, 100.0f))) {
         gui->prevCallback();
     }
-    ImGui::PopStyleColor(); // ImGuiCol_ButtonHovered
-    ImGui::PopStyleColor(); // ImGuiCol_Button
-    
+    ImGui::PopStyleColor();  // ImGuiCol_ButtonHovered
+    ImGui::PopStyleColor();  // ImGuiCol_Button
+    ImGui::PopFont();
+
     ImGui::SameLine();
 
     // Play pause button
-    ImGui::PushStyleColor(ImGuiCol_Button, PLAY_BUTTON_BACKGROUND);
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, PLAY_BUTTON_BACKGROUND);
-    ImGui::PushStyleColor(ImGuiCol_Text, BACKGROUND_COLOR);
-    const char *playback_icon = gui->isPaused ? ICON_FA_PLAY "###playpause" : ICON_FA_PAUSE "###playpause";
+    ImGui::PushFont(gui->playback_icon_font);
+    ImGui::PushStyleColor(ImGuiCol_Button, BACKGROUND_COLOR);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, BACKGROUND_COLOR);
+    ImGui::PushStyleColor(ImGuiCol_Text, PLAY_BUTTON_BACKGROUND);
+    const char *playback_icon = gui->isPaused ? ICON_FA_PLAY_CIRCLE "###playpause" : ICON_FA_PAUSE_CIRCLE "###playpause";
     if(ImGui::Button(playback_icon, ImVec2(100.0f, 100.0f))) {
         gui->playToggleCallback();
     }
-    ImGui::PopStyleColor(); // ImGuiCol_Text
-    ImGui::PopStyleColor(); // ImGuiCol_ButtonHovered
-    ImGui::PopStyleColor(); // ImGuiCol_Button
+    ImGui::PopStyleColor();  // ImGuiCol_Text
+    ImGui::PopStyleColor();  // ImGuiCol_ButtonHovered
+    ImGui::PopStyleColor();  // ImGuiCol_Button
+    ImGui::PopFont();
 
     ImGui::SameLine();
 
     // Forward button
+    ImGui::PushFont(gui->icon_font);
     ImGui::PushStyleColor(ImGuiCol_Button, BACKGROUND_COLOR);
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, BACKGROUND_COLOR);
     if(ImGui::Button(ICON_FA_STEP_FORWARD, ImVec2(100.0f, 100.0f))) {
         gui->nextCallback();
     }
-    ImGui::PopStyleColor(); // ImGuiCol_ButtonHovered
-    ImGui::PopStyleColor(); // ImGuiCol_Button
-
-    ImGui::PopStyleVar(); // ImGuiStyleVar_FrameRounding
-    ImGui::PopStyleVar(); // ImGuiStyleVar_ItemSpacing
-
+    ImGui::PopStyleColor();  // ImGuiCol_ButtonHovered
+    ImGui::PopStyleColor();  // ImGuiCol_Button
     ImGui::PopFont();
+
+    ImGui::PopStyleVar();  // ImGuiStyleVar_ItemSpacing
+    ImGui::PopStyleVar();  // ImGuiStyleVar_FrameRounding
+    ImGui::PopStyleVar();  // ImGuiStyleVar_ItemSpacing
 
     ImGui::Dummy(ImVec2(0.0f, 12.0f));
 
@@ -284,33 +289,33 @@ void PlaybackScreen::drawButtons() {
     // Buttons
     ImGuiStyle& style = ImGui::GetStyle();
     float width = 0.0f;
-    width += 68.0f;
+    width += MENU_BUTTON_SIZE.x;
     width += style.ItemSpacing.x;
-    width += 68.0f;
+    width += MENU_BUTTON_SIZE.x;
     width += style.ItemSpacing.x;
-    width += 68.0f;
+    width += MENU_BUTTON_SIZE.x;
     width += style.ItemSpacing.x;
-    width += 68.0f;
+    width += MENU_BUTTON_SIZE.x;
     AlignForWidth(width);
 
     ImGui::PushFont(gui->icon_font);
 
-    if (StyleButton(ICON_FA_BOOK, ImVec2(68.0f, 68.0f), submenu == Submenu::LOG)) {
+    if (StyleButton(ICON_FA_BOOK, MENU_BUTTON_SIZE, submenu == Submenu::LOG)) {
         submenu = Submenu::LOG;
     }
     ImGui::SameLine();
 
-    if (StyleButton(ICON_FA_MUSIC, ImVec2(68.0f, 68.0f), submenu == Submenu::PLAYLISTS)) {
+    if (StyleButton(ICON_FA_MUSIC, MENU_BUTTON_SIZE, submenu == Submenu::PLAYLISTS)) {
         submenu = Submenu::PLAYLISTS;
     }
     ImGui::SameLine();
 
-    if (StyleButton(ICON_FA_COG, ImVec2(68.0f, 68.0f), submenu == Submenu::SETTINGS)) {
+    if (StyleButton(ICON_FA_COG, MENU_BUTTON_SIZE, submenu == Submenu::SETTINGS)) {
         submenu = Submenu::SETTINGS;
     }
     ImGui::SameLine();
 
-    if (StyleButton(ICON_FA_SEARCH, ImVec2(68.0f, 68.0f), submenu == Submenu::SEARCH)) {
+    if (StyleButton(ICON_FA_SEARCH, MENU_BUTTON_SIZE, submenu == Submenu::SEARCH)) {
         submenu = Submenu::SEARCH;
     }
 
@@ -401,9 +406,13 @@ void GUI::init() {
     icons_config.OversampleH = icons_config.OversampleV = 1;
     icons_config.PixelSnapH = true;
 
+    ImWchar playback_ranges[] = {
+        0xf144, 0xf144, // play icon
+        0xf28b, 0xf28b, // pause icon
+        0,
+    };
+
     ImWchar ranges[] = {
-        0xf04b, 0xf04b, // play icon
-        0xf04c, 0xf04c, // pause icon
         0xf048, 0xf048, // backward icon
         0xf051, 0xf051, // forward icon
         0xf013, 0xf013, // cog (settings) icon
@@ -414,6 +423,7 @@ void GUI::init() {
     };
 
     icon_font = io.Fonts->AddFontFromFileTTF( FONT_ICON_FILE_NAME_FAS, 48.0f, NULL, ranges);
+    playback_icon_font = io.Fonts->AddFontFromFileTTF( FONT_ICON_FILE_NAME_FAS, 96.0f, NULL, playback_ranges);
     io.Fonts->Build();
 
     // Setup style
