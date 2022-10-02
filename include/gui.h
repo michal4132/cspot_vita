@@ -54,8 +54,14 @@ class PlaybackScreen: public Screen {
     PlaybackScreen(GUI *gui);
     ~PlaybackScreen() {};
     void draw();
+    void drawPlayer();
+    void drawSubmenu();
+    void drawButtons();
     void setCoverArt(std::string url);
   private:
+    // TODO: replace with state variable
+    bool enable_log_window = true;
+    bool enable_playlists_window = false;
     int cover_art_width = 0;
     int cover_art_height = 0;
     GLuint cover_art_tex = 0;

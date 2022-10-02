@@ -20,7 +20,7 @@ static ImGuiTextBuffer     Buf;
 bool ScrollToBottom;
 
 // override printf for cspot
-void print_to_menu(const char* fmt, ...) {
+int print_to_menu(const char* fmt, ...) {
     if(Buf.size() > 6096) {
         Buf.clear();
     }
@@ -29,6 +29,17 @@ void print_to_menu(const char* fmt, ...) {
     Buf.appendfv(fmt, args);
     va_end(args);
     ScrollToBottom = true;
+    return 0;
+}
+
+// override vprintf for cspot
+int vprint_to_menu(const char* fmt, va_list args) {
+    if(Buf.size() > 6096) {
+        Buf.clear();
+    }
+    Buf.appendfv(fmt, args);
+    ScrollToBottom = true;
+    return 0;
 }
 
 ImFont* AddDefaultFont( float pixel_size ) {
@@ -109,6 +120,9 @@ void TextInput::draw(ImVec2 size) {
 }
 
 PlaybackScreen::PlaybackScreen(GUI *gui) : Screen(gui) {
+    LoadTextureFromFile("app0:cover_art.png", &cover_art_tex, &cover_art_width, &cover_art_height);
+    gui->name = "Track name";
+    gui->artist = "Artist";
 }
 
 void PlaybackScreen::setCoverArt(std::string url) {
@@ -127,8 +141,7 @@ void PlaybackScreen::setCoverArt(std::string url) {
     }
 }
 
-void PlaybackScreen::draw() {
-    ImGui::BeginChild("player", ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0.0f));
+void PlaybackScreen::drawPlayer() {
     ImGui::PushFont(gui->icon_font);
 
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(30.0f, 0.0f));
@@ -208,18 +221,134 @@ void PlaybackScreen::draw() {
     auto textWidth   = ImGui::CalcTextSize(gui->artist.c_str()).x;
     ImGui::SetCursorPosX((avail - textWidth) * 0.5f);
     ImGui::Text(gui->artist.c_str()); 
+}
 
+void PlaybackScreen::drawSubmenu() {
+    ImGui::PushStyleColor(ImGuiCol_Button, BACKGROUND_COLOR);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, BACKGROUND_COLOR);
+
+    if(enable_log_window) {
+        ImGui::PushFont(gui->log_font);
+        ImGui::TextUnformatted(Buf.begin());
+        ImGui::PopFont();
+        if (ScrollToBottom)
+            ImGui::SetScrollHere(1.0f);
+        ScrollToBottom = false;
+    } else if(enable_playlists_window) {
+        for (int i = 0; i < 5; i++) {
+            if (ImGui::TreeNode((void*)(intptr_t)i, "Playlist %d", i)) {
+                ImGui::Button("Track 1");
+                ImGui::Button("Track 2");
+                ImGui::Button("Track 3");
+                ImGui::Button("Track 4");
+                ImGui::Button("Track 5");
+                ImGui::Button("Track 6");
+                ImGui::Button("Track 7");
+                ImGui::TreePop();
+            }
+        }
+
+    }
+
+    ImGui::PopStyleColor(); // ImGuiCol_ButtonHovered
+    ImGui::PopStyleColor(); // ImGuiCol_Button
+}
+
+void PlaybackScreen::drawButtons() {
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(15.0f, 0.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 30.0f);
+
+    // Buttons
+    ImGuiStyle& style = ImGui::GetStyle();
+    float width = 0.0f;
+    width += 68.0f;
+    width += style.ItemSpacing.x;
+    width += 68.0f;
+    width += style.ItemSpacing.x;
+    width += 68.0f;
+    width += style.ItemSpacing.x;
+    width += 68.0f;
+    AlignForWidth(width);
+
+    ImGui::PushFont(gui->icon_font);
+
+    if (enable_log_window) {
+        ImGui::PushStyleColor(ImGuiCol_Button, PLAY_BUTTON_BACKGROUND);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, PLAY_BUTTON_BACKGROUND);
+        ImGui::PushStyleColor(ImGuiCol_Text, BACKGROUND_COLOR);
+    } else {
+        ImGui::PushStyleColor(ImGuiCol_Button, BACKGROUND_COLOR);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, BACKGROUND_COLOR);
+        ImGui::PushStyleColor(ImGuiCol_Text, PLAY_BUTTON_BACKGROUND);
+    }
+
+    if (ImGui::Button(ICON_FA_BOOK, ImVec2(68.0f, 68.0f))) {
+        enable_log_window = true;
+        enable_playlists_window = false;
+    }
+
+    ImGui::PopStyleColor(); // ImGuiCol_Text
+    ImGui::PopStyleColor(); // ImGuiCol_ButtonHovered
+    ImGui::PopStyleColor(); // ImGuiCol_Button
+    ImGui::SameLine();
+
+    if (enable_playlists_window) {
+        ImGui::PushStyleColor(ImGuiCol_Button, PLAY_BUTTON_BACKGROUND);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, PLAY_BUTTON_BACKGROUND);
+        ImGui::PushStyleColor(ImGuiCol_Text, BACKGROUND_COLOR);
+    } else {
+        ImGui::PushStyleColor(ImGuiCol_Button, BACKGROUND_COLOR);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, BACKGROUND_COLOR);
+        ImGui::PushStyleColor(ImGuiCol_Text, PLAY_BUTTON_BACKGROUND);
+    }
+
+    if (ImGui::Button(ICON_FA_MUSIC, ImVec2(68.0f, 68.0f))) {
+        enable_playlists_window = true;
+        enable_log_window = false;
+    }
+
+    ImGui::PopStyleColor(); // ImGuiCol_Text
+    ImGui::PopStyleColor(); // ImGuiCol_ButtonHovered
+    ImGui::PopStyleColor(); // ImGuiCol_Button
+
+    ImGui::PushStyleColor(ImGuiCol_Button, BACKGROUND_COLOR);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, BACKGROUND_COLOR);
+
+    ImGui::SameLine();
+    if (ImGui::Button(ICON_FA_COG, ImVec2(68.0f, 68.0f))) {
+        enable_log_window = false;
+        enable_playlists_window = false;
+    }
+    ImGui::SameLine();
+    if (ImGui::Button(ICON_FA_SEARCH, ImVec2(68.0f, 68.0f))) {
+        enable_log_window = false;
+        enable_playlists_window = false;
+    }
+    ImGui::PopStyleColor(); // ImGuiCol_ButtonHovered
+    ImGui::PopStyleColor(); // ImGuiCol_Button
+
+    ImGui::PopFont();
+    ImGui::PopStyleVar(); // ImGuiStyleVar_FrameRounding
+    ImGui::PopStyleVar(); // ImGuiStyleVar_ItemSpacing
+}
+
+void PlaybackScreen::draw() {
+    ImGui::BeginChild("player", ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0.0f), false, ImGuiWindowFlags_NavFlattened);
+    this->drawPlayer();
     ImGui::EndChild();
 
     ImGui::SameLine();
 
-    ImGui::BeginChild("scrolling", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f));
-    ImGui::PushFont(gui->log_font);
-    ImGui::TextUnformatted(Buf.begin());
-    ImGui::PopFont();
-    if (ScrollToBottom)
-        ImGui::SetScrollHere(1.0f);
-    ScrollToBottom = false;
+    ImGui::BeginChild("right_panel", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), false, ImGuiWindowFlags_NavFlattened);
+    {
+        ImGui::BeginChild("submenu", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y * 0.85f), false, ImGuiWindowFlags_NavFlattened);
+        this->drawSubmenu();
+        ImGui::EndChild();
+
+        ImGui::BeginChild("buttons", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f), false, ImGuiWindowFlags_NavFlattened);
+        this->drawButtons();
+        ImGui::EndChild();
+    }
     ImGui::EndChild();
 }
 
@@ -291,6 +420,10 @@ void GUI::init() {
         0xf04c, 0xf04c, // pause icon
         0xf048, 0xf048, // backward icon
         0xf051, 0xf051, // forward icon
+        0xf013, 0xf013, // cog (settings) icon
+        0xf02d, 0xf02d, // book (log) icon
+        0xf002, 0xf002, // search icon
+        0xf001, 0xf001, // music icon
         0,
     };
 
@@ -326,11 +459,9 @@ void GUI::start() {
         if (ImGui::Begin("CSpot", nullptr, WINDOW_FLAGS)) {
             screen->draw();
 
-            // if(debug) {
-                // ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiCond_FirstUseEver);
-                // bool show = true;
-                // ImGui::ShowDemoWindow(&show);
-            // }
+            // ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiCond_FirstUseEver);
+            // bool show = true;
+            // ImGui::ShowDemoWindow(&show);
 
             ImGui::End();
         }
