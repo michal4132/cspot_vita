@@ -232,19 +232,9 @@ void PlaybackScreen::drawPlayer() {
 
     ImGui::Dummy(ImVec2(0.0f, 12.0f));
 
-    // track name text
-    auto avail3 = ImGui::GetContentRegionAvail().x;
-    auto textWidth2   = ImGui::CalcTextSize(gui->name.c_str()).x;
-    ImGui::SetCursorPosX((avail3 - textWidth2) * 0.5f);
-    ImGui::Text(gui->name.c_str()); 
-
+    TextCentered(gui->name); 
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
-
-    // artist text
-    auto avail = ImGui::GetContentRegionAvail().x;
-    auto textWidth   = ImGui::CalcTextSize(gui->artist.c_str()).x;
-    ImGui::SetCursorPosX((avail - textWidth) * 0.5f);
-    ImGui::Text(gui->artist.c_str()); 
+    TextCentered(gui->artist); 
 }
 
 void PlaybackScreen::drawSubmenu() {
