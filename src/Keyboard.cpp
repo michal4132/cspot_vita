@@ -1,11 +1,12 @@
+#include "Keyboard.h"
+
+#include <psp2/kernel/clib.h>
+#include <psp2/ime_dialog.h>
 #include <codecvt>
 #include <cstring>
 #include <locale>
-#include <psp2/kernel/clib.h>
-#include <psp2/ime_dialog.h>
 #include <vitaGL.h>
 
-#include "keyboard.h"
 
 /*
     Based off of libkdbvita by usineur -> https://github.com/usineur/libkbdvita/blob/master/kbdvita.c
@@ -25,7 +26,8 @@ namespace Keyboard {
         text.clear();
 
         // UTF8 -> UTF16
-        std::u16string title_u16 = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(title.data());
+        std::u16string title_u16 = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,
+                                                        char16_t>{}.from_bytes(title.data());
 
         SceImeDialogParam param;
         sceImeDialogParamInit(&param);
@@ -34,16 +36,16 @@ namespace Keyboard {
         param.languagesForced = SCE_TRUE;
         param.type = SCE_IME_TYPE_DEFAULT;
         param.option = 0;
-        if(password) {
+        if (password) {
             param.textBoxMode = SCE_IME_DIALOG_TEXTBOX_MODE_PASSWORD;
         }
-            
+
         param.title = reinterpret_cast<const SceWChar16 *>(title_u16.c_str());
         param.maxTextLength = SCE_IME_DIALOG_MAX_TEXT_LENGTH;
         param.inputTextBuffer = buffer;
-        
+
         int ret = sceImeDialogInit(&param);
-        if(ret < 0) {
+        if (ret < 0) {
             return ret;
         }
 
@@ -54,7 +56,7 @@ namespace Keyboard {
     SceCommonDialogStatus Update(void) {
         if (!running)
             return SCE_COMMON_DIALOG_STATUS_NONE;
-        
+
         SceCommonDialogStatus status = sceImeDialogGetStatus();
         if (status == SCE_COMMON_DIALOG_STATUS_FINISHED) {
             SceImeDialogResult result;
@@ -64,10 +66,10 @@ namespace Keyboard {
             if ((result.button == SCE_IME_DIALOG_BUTTON_CLOSE) || (result.button == SCE_IME_DIALOG_BUTTON_ENTER)) {
                 std::u16string buffer_u16 = reinterpret_cast<char16_t *>(buffer);
                 text = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.to_bytes(buffer_u16.data());
-            }
-            else
+            } else {
                 status = static_cast<SceCommonDialogStatus>(SCE_COMMON_DIALOG_STATUS_CANCELLED);
-            
+            }
+
             sceImeDialogTerm();
             running = false;
         }
@@ -76,10 +78,10 @@ namespace Keyboard {
     }
 
     std::string GetText(const std::string &title, bool password) {
-        if(Init(title, password) != 0) {
+        if (Init(title, password) != 0) {
             return std::string();
         }
-        
+
         bool done = false;
         do {
             glClear(GL_COLOR_BUFFER_BIT);
@@ -92,8 +94,8 @@ namespace Keyboard {
                 done = false;
 
             vglSwapBuffers(GL_TRUE);
-        } while(!done);
+        } while (!done);
 
         return text;
     }
-}
+}  // namespace Keyboard

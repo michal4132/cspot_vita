@@ -4,13 +4,12 @@
 #include <fstream>
 #include "AudioSink.h"
 
-class VitaAudioSink : public AudioSink
-{
-public:
+class VitaAudioSink : public AudioSink {
+ public:
     VitaAudioSink();
     ~VitaAudioSink();
     void feedPCMFrames(const uint8_t *buffer, size_t bytes);
     void volumeChanged(uint16_t volume);
-private:
+ private:
     int threadid;
 };

@@ -1,3 +1,4 @@
+// NOLINTFILE
 // dear imgui, v1.61 WIP
 // (demo code)
 

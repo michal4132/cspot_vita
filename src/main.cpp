@@ -1,4 +1,4 @@
-#include <psp2/appmgr.h> 
+#include <psp2/appmgr.h>
 #include <psp2/apputil.h>
 #include <psp2/audioout.h>
 #include <psp2/bgapputil.h>
@@ -9,19 +9,19 @@
 #include <imgui_vita.h>
 #include <vitaGL.h>
 
-#include "paf.h"
+#include "Paf.h"
 #include <SpircController.h>
 #include <ConfigJSON.h>
 #include <Logger.h>
 
 #include "CliFile.h"
 #include "VitaAudioSink.h"
-#include "keyboard.h"
-#include "utils.h"
-#include "gui.h"
+#include "Keyboard.h"
+#include "Utils.h"
+#include "Gui.h"
 
 
-// TODO:
+// TODO(michal4132):
 // - proper http downloader cleanup
 // - pause ImGui in sleep mode
 // - settings screen
@@ -45,9 +45,6 @@ std::shared_ptr<MercuryManager> mercuryManager;
 std::shared_ptr<SpircController> spircController;
 std::shared_ptr<LoginBlob> blob;
 
-// std::string credentialsFileName = "ux0:data/cspot/authBlob.json";
-// std::string configFileName = "ux0:data/cspot/config.json";
-
 static int watch_id;
 static int cspot_id;
 
@@ -62,7 +59,7 @@ SceVoid watch_dog(SceSize _args, void *_argp) {
 
     SceAppMgrEvent appEvent;
 
-    while(gui->isRunning) {
+    while (gui->isRunning) {
         sceAppMgrReceiveEvent(&appEvent);
         switch (appEvent.event) {
             case SCE_APP_EVENT_REQUEST_QUIT:
@@ -100,14 +97,16 @@ int start_cspot(SceSize _args, void *_argp) {
             sceKernelDelayThread(10000);
         }
 
-        spircController = std::make_shared<SpircController>(mercuryManager, blob->username, audioSink);
+        spircController = std::make_shared<SpircController>(mercuryManager,
+                                        blob->username, audioSink);
 
         // Add event handler
         spircController->setEventHandler([gui](CSpotEvent &event) {
             switch (event.eventType) {
             case CSpotEventType::TRACK_INFO: {
                 TrackInfo track = std::get<TrackInfo>(event.data);
-                gui->setTrack(track.name, track.album, track.artist, track.imageUrl);
+                gui->setTrack(track.name, track.album,
+                                track.artist, track.imageUrl);
                 break;
             }
             case CSpotEventType::PLAY_PAUSE: {
@@ -139,7 +138,6 @@ int start_cspot(SceSize _args, void *_argp) {
         gui->playToggleCallback = []() {
             return spircController->playToggle();
         };
-    
 
         mercuryManager->reconnectedCallback = []() {
             return spircController->subscribe();
@@ -156,7 +154,8 @@ int start_cspot(SceSize _args, void *_argp) {
 }
 
 void start_cspot_thread(GUI *gui) {
-    cspot_id = sceKernelCreateThread("cspot", (SceKernelThreadEntry)start_cspot, 0x10000100, 0x10000, 0, 0, NULL);
+    cspot_id = sceKernelCreateThread("cspot", (SceKernelThreadEntry)start_cspot,
+                                          0x10000100, 0x10000, 0, 0, NULL);
     sceKernelStartThread(cspot_id, sizeof(void*), &gui);
 }
 
@@ -173,7 +172,8 @@ int main(void) {
 
     init_network();
 
-    watch_id = sceKernelCreateThread("watchdog", (SceKernelThreadEntry)watch_dog, 0x10000100, 0x100, 0, 0, NULL);
+    watch_id = sceKernelCreateThread("watchdog",
+            (SceKernelThreadEntry)watch_dog, 0x10000100, 0x100, 0, 0, NULL);
     GUI *gui_p = &gui;
     sceKernelStartThread(watch_id, sizeof(void*), &gui_p);
 
@@ -196,7 +196,7 @@ int main(void) {
 
     std::string authData;
     file->readFile(CREDENTIALS_FILE_NAME, authData);
-    if(authData.length() > 0) {
+    if (authData.length() > 0) {
         blob->loadJson(authData);
         start_cspot_thread(&gui);
         gui.set_screen(gui.playback_screen);
@@ -214,6 +214,6 @@ int main(void) {
     sceKernelDeleteThread(watch_id);
     sceKernelDeleteThread(cspot_id);
 
-    sceKernelExitProcess(0); // DO NOT REMOVE
+    sceKernelExitProcess(0);  // DO NOT REMOVE
     return 0;
 }

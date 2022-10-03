@@ -1,10 +1,7 @@
-#ifndef _VITA_HB_SORTER_KEYBOARD_H_
-#define _VITA_HB_SORTER_KEYBOARD_H_
+#pragma once
 
 #include <string>
 
 namespace Keyboard {
     std::string GetText(const std::string &title, bool password = false);
-}
-
-#endif
+}  // namespace Keyboard

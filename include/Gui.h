@@ -3,19 +3,19 @@
 #include <imgui_vita.h>
 #include <atomic>
 #include <string>
-#include "utils.h"
+#include "Utils.h"
 #include <functional>
 #include <Logger.h>
 
 #define MAX_CREDENTIAL_LEN            256
 
 class TextInput {
-  public:
-    TextInput() {};
+ public:
+    TextInput() {}
     TextInput(ImVec2 text_align, float align, const char *prompt, const char *hint, bool password = false)
      : text_align(text_align), align(align), prompt(prompt), hint(hint), password(password) {
         strncpy(buffer, hint, MAX_CREDENTIAL_LEN);
-     };
+    }
     void draw(ImVec2 size);
     char buffer[MAX_CREDENTIAL_LEN];
     bool password;
@@ -29,19 +29,19 @@ class TextInput {
 class GUI;
 
 class Screen {
-  public:
-    Screen(GUI *gui) : gui(gui) {};
-    virtual void draw() {};
-  protected:
+ public:
+    explicit Screen(GUI *gui) : gui(gui) {}
+    virtual void draw() {}
+ protected:
     GUI *gui;
 };
 
 class LoginScreen: public Screen {
-  public:
-    LoginScreen(GUI *gui);
+ public:
+    explicit LoginScreen(GUI *gui);
     ~LoginScreen();
     void draw();
-  private:
+ private:
     TextInput username;
     TextInput password;
     int logo_width = 0;
@@ -50,15 +50,15 @@ class LoginScreen: public Screen {
 };
 
 class PlaybackScreen: public Screen {
-  public:
-    PlaybackScreen(GUI *gui);
-    ~PlaybackScreen() {};
+ public:
+    explicit PlaybackScreen(GUI *gui);
+    ~PlaybackScreen() {}
     void draw();
     void drawPlayer();
     void drawSubmenu();
     void drawButtons();
     void setCoverArt(std::string url);
-  private:
+ private:
     enum class Submenu {
       LOG,
       PLAYLISTS,
@@ -74,7 +74,7 @@ class PlaybackScreen: public Screen {
 };
 
 class GUI {
-  public:
+ public:
     ~GUI();
     void init();
     void start();
@@ -85,7 +85,7 @@ class GUI {
     ImFont *log_font;
     Screen *login_screen = nullptr;
     Screen *playback_screen = nullptr;
-    void set_screen(Screen *s) { screen = s; };
+    void set_screen(Screen *s) { screen = s; }
 
     // Player status
     std::string name;
@@ -96,23 +96,23 @@ class GUI {
 
     void setPause(bool _isPaused) {
       isPaused = _isPaused;
-    };
+    }
     void setTrack(std::string _name, std::string _album, std::string _artist, std::string _imageUrl) {
       name = _name;
       album = _album;
       artist = _artist;
-      if(imageUrl != _imageUrl) {
+      if (imageUrl != _imageUrl) {
           imageUrl = _imageUrl;
           ((PlaybackScreen*) playback_screen)->setCoverArt(imageUrl);
       }
-    };
+    }
 
     // CSpot control
     std::function<void()> nextCallback;
     std::function<void()> prevCallback;
     std::function<void()> playToggleCallback;
 
-  private:
+ private:
     Screen *screen;
 };
 

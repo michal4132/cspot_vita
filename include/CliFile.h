@@ -1,14 +1,13 @@
-#ifndef CLIFILE_H
-#define CLIFILE_H
+#pragma once
 
 #include "FileHelper.h"
 
-class CliFile : public FileHelper
-{
-public:
+#include <string>
+
+class CliFile : public FileHelper {
+ public:
     CliFile();
     ~CliFile();
-    bool readFile(std::string filename, std::string &fileContent);
+    bool readFile(std::string filename, std::string &fileContent);  // NOLINT
     bool writeFile(std::string filename, std::string fileContent);
 };
-#endif

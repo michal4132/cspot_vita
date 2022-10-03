@@ -38,19 +38,19 @@ add_compile_definitions(VITA)
 add_subdirectory("cspot/cspot" ${CMAKE_CURRENT_BINARY_DIR}/cspot)
 
 include_directories(
-  include
-  cspot/cspot/include
-  cspot/bell/include
+  ${CMAKE_SOURCE_DIR}/include
+  ${CMAKE_SOURCE_DIR}/cspot/cspot/include
+  ${CMAKE_SOURCE_DIR}/cspot/bell/include
 )
 
 add_executable(${PROJECT_NAME}
   src/main.cpp
-  src/utils.cpp
-  src/keyboard.cpp
+  src/Utils.cpp
+  src/Keyboard.cpp
   src/CliFile.cpp
   src/VitaAudioSink.cpp
   src/imgui_demo.cpp
-  src/gui.cpp
+  src/Gui.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

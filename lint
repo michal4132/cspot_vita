@@ -1,0 +1,2 @@
+#!/bin/sh
+cpplint --exclude=src/imgui_demo.cpp --exclude=include/paf --exclude=include/Font.h --exclude=include/image --recursive src include
