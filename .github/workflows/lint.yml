@@ -15,7 +15,10 @@ jobs:
         # submodules: recursive
       
     - name: Install cpplint
-      run: sudo pip3 install pip install cpplint
-      
-    - name: cpplint
+      run: sudo pip3 install cpplint
+
+    - name: Install cppcheck
+      run: sudo apt -y install cppcheck
+
+    - name: lint
       run: ./lint
