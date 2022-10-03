@@ -1,0 +1,21 @@
+name: Linter
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    strategy:
+        matrix:
+          os: [ubuntu-latest]
+        fail-fast: false
+    runs-on:  ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+      # with:
+        # submodules: recursive
+      
+    - name: Install cpplint
+      run: sudo pip3 install pip install cpplint
+      
+    - name: cpplint
+      run: ./lint
