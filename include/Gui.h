@@ -93,6 +93,7 @@ class GUI {
     std::string artist;
     std::string imageUrl;
     bool isPaused;
+    bool cspot_started = false;
 
     void setPause(bool _isPaused) {
       isPaused = _isPaused;

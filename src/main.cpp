@@ -100,6 +100,8 @@ int start_cspot(SceSize _args, void *_argp) {
         spircController = std::make_shared<SpircController>(mercuryManager,
                                         blob->username, audioSink);
 
+        gui->cspot_started = true;
+
         // Add event handler
         spircController->setEventHandler([gui](CSpotEvent &event) {
             switch (event.eventType) {

@@ -192,7 +192,9 @@ void PlaybackScreen::drawPlayer() {
     // Backward button
     ImGui::PushFont(gui->icon_font);
     if (StyleButton(ICON_FA_STEP_BACKWARD,  ImVec2(100.0f, 100.0f))) {
-        gui->prevCallback();
+        if (gui->cspot_started) {
+            gui->prevCallback();
+        }
     }
     ImGui::PopFont();
 
@@ -202,7 +204,9 @@ void PlaybackScreen::drawPlayer() {
     ImGui::PushFont(gui->playback_icon_font);
     const char *playback_icon = gui->isPaused ? ICON_FA_PLAY_CIRCLE "###playpause" : ICON_FA_PAUSE_CIRCLE "###playpause"; //NOLINT
     if (StyleButton(playback_icon, ImVec2(100.0f, 100.0f))) {
-        gui->playToggleCallback();
+        if (gui->cspot_started) {
+            gui->playToggleCallback();
+        }
     }
     ImGui::PopFont();
 
@@ -211,7 +215,9 @@ void PlaybackScreen::drawPlayer() {
     // Forward button
     ImGui::PushFont(gui->icon_font);
     if (StyleButton(ICON_FA_STEP_FORWARD, ImVec2(100.0f, 100.0f))) {
-        gui->nextCallback();
+        if (gui->cspot_started) {
+            gui->nextCallback();
+        }
     }
     ImGui::PopFont();
 
