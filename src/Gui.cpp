@@ -21,6 +21,20 @@
                                      | ImGuiWindowFlags_NoCollapse)
 #define MENU_BUTTON_SIZE              ImVec2(68.0f, 68.0f)
 
+using namespace sce::Json; // NOLINT
+
+class Allocator : public MemAllocator {
+ public:
+    Allocator() {}
+
+    void* allocateMemory(size_t size, void *unk) override {
+        return malloc(size);
+    }
+    void freeMemory(void *ptr, void *unk) override {
+        free(ptr);
+    }
+};
+
 // Logger buffer
 static ImGuiTextBuffer Buf;
 bool ScrollToBottom;
@@ -154,7 +168,7 @@ void PlaybackScreen::setCoverArt(std::string url) {
         LoadTextureFromFile(cover_art_path(url).c_str(), &cover_art_tex, &cover_art_width, &cover_art_height);
     } else {
         CSPOT_LOG(info, "Download cover art");
-        cover_art_png_len = download_image(url.c_str(), &cover_art_png);
+        cover_art_png_len = download(url.c_str(), &cover_art_png);
         if (cover_art_png_len > 0) {
             LoadTextureFromMemory(cover_art_png, cover_art_png_len,
                                   &cover_art_tex, &cover_art_width, &cover_art_height);
@@ -232,6 +246,84 @@ void PlaybackScreen::drawPlayer() {
     TextCentered(gui->artist);
 }
 
+void PlaybackScreen::getPlaylists() {
+    uint8_t *json_data;
+    size_t json_len = gui->api.get_current_users_playlists(&json_data, 10, 0);
+
+    // Create a MemAllocator derivative.
+    Allocator* alloc = new Allocator();
+
+    InitParameter params;
+    params.allocator = alloc;
+    params.bufSize = 100;
+
+    Initializer init = Initializer();
+    int ret = init.initialize(&params);  // Initialization at last!
+
+    Value val = Value();  // Creating our Root value.
+    Parser::parse(val, (const char*) json_data, json_len);
+
+    for (int i = 0; i < val.count(); i++) {
+        String s = String();
+        const Value& v = val.getValue(i);
+        CSPOT_LOG(info, "Child %d", i);
+
+        switch (v.getType()) {
+            case ValueType::BoolValue:
+            case ValueType::IntValue:
+            case ValueType::UIntValue:
+            case ValueType::RealValue:
+                v.toString(s);
+                CSPOT_LOG(info, "Value: %s", s.c_str());
+                break;
+            case ValueType::StringValue:
+                CSPOT_LOG(info, "Value: %s", v.getString().c_str());
+                break;
+            case ValueType::ArrayValue: {
+                CSPOT_LOG(info, "Child %d is an Array. Iterating though values.", i);
+                const Array& arr = v.getArray();
+                int j = 0;
+                for (Array::iterator it = arr.begin(); it != arr.end(); it++) {
+                    Value& va = *it;
+                    switch (va.getType()) {
+                        case ValueType::ObjectValue: {
+                                const Object& obj = va.getObject();
+                                for (Object::Pair& pair : obj) {
+                                    if (pair.key == "name") {
+                                        CSPOT_LOG(info, "Track: %s", pair.value.getString().c_str());
+                                        playlists.push_back(std::string(pair.value.getString().c_str()));
+                                    } else if (pair.key == "uri") {
+                                        playlist_uri.push_back(std::string(pair.value.getString().c_str()));
+                                    }
+                                }
+                            }
+                            break;
+                        case ValueType::BoolValue:
+                        case ValueType::IntValue:
+                        case ValueType::UIntValue:
+                        case ValueType::RealValue:
+                            va.toString(s);
+                            CSPOT_LOG(info, "Value %d: %s", j, s.c_str());
+                            break;
+                        case ValueType::StringValue:
+                            CSPOT_LOG(info, "Value %d: %s", j, va.getString().c_str());
+                            break;
+                        default:
+                            CSPOT_LOG(info, "Value is null");
+                        }
+                        s.clear();
+                        ++j;
+                    }
+                }
+                break;
+            default:
+                CSPOT_LOG(info, "Value is null");
+        }
+    }
+    init.terminate();
+    sce_paf_free(json_data);
+}
+
 void PlaybackScreen::drawSubmenu() {
     ImGui::PushStyleColor(ImGuiCol_Button, BACKGROUND_COLOR);
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, BACKGROUND_COLOR);
@@ -246,8 +338,12 @@ void PlaybackScreen::drawSubmenu() {
             ScrollToBottom = false;
             break;
         case Submenu::PLAYLISTS:
-            for (int i = 0; i < 5; i++) {
-                if (ImGui::TreeNode((void*)(intptr_t)i, "Playlist %d", i)) {
+            for (uint16_t i = 0; i < playlists.size(); i++) {
+                if (ImGui::TreeNode((void*)(intptr_t)i, playlists[i].c_str())) {
+                    if (ImGui::Button("Play")) {
+                        gui->activateDevice();
+                        gui->api.play_by_uri(playlist_uri[i], 0, 0);
+                    }
                     ImGui::Button("Track 1");
                     ImGui::Button("Track 2");
                     ImGui::Button("Track 3");
@@ -291,6 +387,7 @@ void PlaybackScreen::drawButtons() {
     ImGui::SameLine();
 
     if (StyleButton(ICON_FA_MUSIC, MENU_BUTTON_SIZE, submenu == Submenu::PLAYLISTS)) {
+        getPlaylists();
         submenu = Submenu::PLAYLISTS;
     }
     ImGui::SameLine();

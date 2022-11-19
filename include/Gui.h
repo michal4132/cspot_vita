@@ -3,7 +3,9 @@
 #include <imgui_vita.h>
 #include <atomic>
 #include <string>
+#include <vector>
 #include "Utils.h"
+#include "API.h"
 #include <functional>
 #include <Logger.h>
 
@@ -57,7 +59,9 @@ class PlaybackScreen: public Screen {
     void drawPlayer();
     void drawSubmenu();
     void drawButtons();
+    void getPlaylists();
     void setCoverArt(std::string url);
+
  private:
     enum class Submenu {
       LOG,
@@ -65,6 +69,9 @@ class PlaybackScreen: public Screen {
       SETTINGS,
       SEARCH,
     };
+    std::vector<std::string> playlists;
+    std::vector<std::string> playlist_uri;
+    std::vector<bool> tracks_loaded;
     Submenu submenu = Submenu::LOG;
     int cover_art_width = 0;
     int cover_art_height = 0;
@@ -107,11 +114,14 @@ class GUI {
           ((PlaybackScreen*) playback_screen)->setCoverArt(imageUrl);
       }
     }
+    // Spotify API
+    API api;
 
     // CSpot control
     std::function<void()> nextCallback;
     std::function<void()> prevCallback;
     std::function<void()> playToggleCallback;
+    std::function<void()> activateDevice;
 
  private:
     Screen *screen;

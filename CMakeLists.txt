@@ -24,6 +24,7 @@ project(cspot_vita C CXX)
 include("${VITASDK}/share/vita.cmake" REQUIRED)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -std=c++11")
 set(CMAKE_CXX_STANDARD 17)
 
 # patch CSpot and bell
@@ -45,6 +46,7 @@ include_directories(
 
 add_executable(${PROJECT_NAME}
   src/main.cpp
+  src/API.cpp
   src/Utils.cpp
   src/Keyboard.cpp
   src/CliFile.cpp
@@ -84,6 +86,7 @@ target_link_libraries(${PROJECT_NAME}
   SceShaccCgExt
   SceSysmodule_stub
   SceTouch_stub
+  SceLibJson_stub
   taihen_stub
 )
 

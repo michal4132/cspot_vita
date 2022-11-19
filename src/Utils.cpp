@@ -53,7 +53,7 @@ bool cache_cover_art(std::string url, uint8_t *buffer, uint32_t length) {
     return true;
 }
 
-int download_image(const char *url, uint8_t **return_buffer) {
+int download(const char *url, uint8_t **return_buffer, int method, std::string post_data, Headers headers) {
     int res, tpl, conn, req;
     SceUInt64 length = 0;
 
@@ -69,13 +69,17 @@ int download_image(const char *url, uint8_t **return_buffer) {
         goto http_del_temp;
     }
 
-    req = sceHttpCreateRequestWithURL(conn, 0, url, 0);
+    req = sceHttpCreateRequestWithURL(conn, method, url, post_data.length());
     if (req < 0) {
         CSPOT_LOG(error, "sceHttpCreateRequestWithURL failed (0x%X)", req);
         goto http_del_conn;
     }
 
-    res = sceHttpSendRequest(req, NULL, 0);
+    for (auto it : headers) {
+        sceHttpAddRequestHeader(req, it.first.c_str(), it.second.c_str(), SCE_HTTP_HEADER_OVERWRITE);
+    }
+
+    res = sceHttpSendRequest(req, post_data.c_str(), post_data.length());
     if (res < 0) {
         CSPOT_LOG(error, "sceHttpSendRequest failed (0x%X)", res);
         goto http_del_req;
@@ -208,6 +212,7 @@ int is_dir(const char *path) {
 }
 
 void init_network() {
+    sceSysmoduleLoadModule(SCE_SYSMODULE_JSON);
     sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
 
     int res;

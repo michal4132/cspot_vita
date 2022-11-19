@@ -11,6 +11,7 @@
 
 #include "Paf.h"
 #include <SpircController.h>
+#include <JSONObject.h>
 #include <ConfigJSON.h>
 #include <Logger.h>
 
@@ -75,6 +76,11 @@ void login_cspot(const char *user, const char *password) {
     blob->loadUserPass(user, password);
 }
 
+// TODO(michal4132): get from cspot
+#define CLIENT_ID_ANDROID "65b708073fc0480ea92a077233ca87bd"
+#define DEVICE_ID         "142137fd329622137a14901634264e6f332e2411"
+#define SCOPES            "user-read-playback-state,user-modify-playback-state"
+
 int start_cspot(SceSize _args, void *_argp) {
     GUI* gui = *((GUI**)_argp);
 
@@ -97,18 +103,35 @@ int start_cspot(SceSize _args, void *_argp) {
             sceKernelDelayThread(10000);
         }
 
-        spircController = std::make_shared<SpircController>(mercuryManager,
-                                        blob->username, audioSink);
+        spircController = std::make_shared<SpircController>(mercuryManager, blob->username, audioSink);
 
         gui->cspot_started = true;
+
+        // Request token for player control
+        mercuryCallback responseLambda = [=](std::unique_ptr<MercuryResponse> res) {
+            if (res->parts.size() == 0) {
+                CSPOT_LOG(debug, "Empty response");
+                return;
+            }
+
+            cJSON *root = cJSON_Parse((const char *) res->parts[0].data());
+            char *token = cJSON_GetObjectItem(root, "accessToken")->valuestring;
+            gui->api.set_token(token);
+            cJSON_Delete(root);
+            // free(token);
+
+            CSPOT_LOG(debug, "response: %s", res->parts[0].data());
+        };
+        mercuryManager->execute(MercuryType::GET, "hm://keymaster/token/authenticated?scope="
+                            + std::string(SCOPES) +"&client_id="
+                            + std::string(CLIENT_ID_ANDROID) +"&device_id=" + std::string(DEVICE_ID), responseLambda);
 
         // Add event handler
         spircController->setEventHandler([gui](CSpotEvent &event) {
             switch (event.eventType) {
             case CSpotEventType::TRACK_INFO: {
                 TrackInfo track = std::get<TrackInfo>(event.data);
-                gui->setTrack(track.name, track.album,
-                                track.artist, track.imageUrl);
+                gui->setTrack(track.name, track.album, track.artist, track.imageUrl);
                 break;
             }
             case CSpotEventType::PLAY_PAUSE: {
@@ -135,6 +158,13 @@ int start_cspot(SceSize _args, void *_argp) {
 
         gui->prevCallback = []() {
             return spircController->prevSong();
+        };
+
+        gui->activateDevice = []() {
+            if (!spircController->state->isActive()) {
+                spircController->state->setActive(true);
+            }
+            return spircController->notify();
         };
 
         gui->playToggleCallback = []() {

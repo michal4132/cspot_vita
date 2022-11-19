@@ -8,7 +8,7 @@
 
 #define BUFFER_SIZE       2048
 #define VITA_DECODE_SIZE (BUFFER_SIZE / 4)
-#define BUFFER_COUNT     16
+#define BUFFER_COUNT     32
 
 static uint8_t g_buffer[BUFFER_COUNT][BUFFER_SIZE];
 static uint32_t data_len[BUFFER_COUNT] = {0};

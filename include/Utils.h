@@ -2,6 +2,8 @@
 
 #include <imgui_vita.h>
 #include <string>
+#include <vector>
+#include <utility>
 
 typedef struct SceAppMgrEvent {
     int event;       /* Event ID */
@@ -28,13 +30,17 @@ extern "C" {
 #define SCE_APP_EVENT_REQUEST_QUIT          (0x20000001)
 #define SCE_APP_EVENT_UNK2                  (0x30000003)
 
+// HTTP Headers
+typedef std::vector<std::pair<std::string, std::string>> Headers;
+
 bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height);
 bool LoadTextureFromMemory(const uint8_t* buffer, uint32_t length,
                            GLuint* out_texture, int* out_width, int* out_height);
 int is_dir(const char *path);
 void init_network();
 void term_network();
-int download_image(const char *url, uint8_t **return_buffer);
+int download(const char *url, uint8_t **return_buffer, int method = SCE_HTTP_METHOD_GET,
+                        std::string post_data = "", Headers headers = {});
 bool cache_cover_art(std::string url, uint8_t *buffer, uint32_t length);
 std::string cover_art_path(std::string url);
 bool is_cover_cached(std::string url);
