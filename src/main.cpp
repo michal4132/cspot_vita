@@ -184,8 +184,7 @@ int start_cspot(SceSize _args, void *_argp) {
 }
 
 void start_cspot_thread(GUI *gui) {
-    cspot_id = sceKernelCreateThread("cspot", (SceKernelThreadEntry)start_cspot,
-                                          0x10000100, 0x10000, 0, 0, NULL);
+    cspot_id = sceKernelCreateThread("cspot", (SceKernelThreadEntry)start_cspot, 0x10000100, 0x10000, 0, 0, NULL);
     sceKernelStartThread(cspot_id, sizeof(void*), &gui);
 }
 
@@ -202,8 +201,7 @@ int main(void) {
 
     init_network();
 
-    watch_id = sceKernelCreateThread("watchdog",
-            (SceKernelThreadEntry)watch_dog, 0x10000100, 0x100, 0, 0, NULL);
+    watch_id = sceKernelCreateThread("watchdog", (SceKernelThreadEntry) watch_dog, 0x10000100, 0x100, 0, 0, NULL);
     GUI *gui_p = &gui;
     sceKernelStartThread(watch_id, sizeof(void*), &gui_p);
 

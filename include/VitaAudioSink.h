@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-#include <fstream>
 #include "AudioSink.h"
 
 class VitaAudioSink : public AudioSink {

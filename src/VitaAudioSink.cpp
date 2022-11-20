@@ -8,7 +8,7 @@
 
 #define BUFFER_SIZE       2048
 #define VITA_DECODE_SIZE (BUFFER_SIZE / 4)
-#define BUFFER_COUNT     32
+#define BUFFER_COUNT     16
 
 static uint8_t g_buffer[BUFFER_COUNT][BUFFER_SIZE];
 static uint32_t data_len[BUFFER_COUNT] = {0};
@@ -18,16 +18,12 @@ static int write_buffer = 0;
 static int port;
 
 static int feedBlocking() {
-    while (1) {
-        if (end_flag == 1) break;
-
+    while (end_flag == 0) {
         if (data_len[read_buffer] == BUFFER_SIZE) {
             sceAudioOutOutput(port, g_buffer[read_buffer]);
-
             data_len[read_buffer] = 0;
 
             read_buffer++;
-
             if (read_buffer >= BUFFER_COUNT) read_buffer = 0;
         } else {
             sceKernelDelayThread(50000);
@@ -57,36 +53,30 @@ VitaAudioSink::~VitaAudioSink() {
 void VitaAudioSink::feedPCMFrames(const uint8_t *buffer, size_t bytes) {
     uint32_t pos = 0;
     while (pos < bytes) {
-        if (data_len[write_buffer] > BUFFER_SIZE) {
-            CSPOT_LOG(error, "broken buffer[%d] = %d", write_buffer, data_len[write_buffer]);
-        }
-
         if (data_len[write_buffer] < BUFFER_SIZE) {
             uint32_t buffer_space = BUFFER_SIZE - data_len[write_buffer];
             uint32_t aval_data = bytes - pos;
+            uint32_t to_write;
             if (aval_data > buffer_space) {
-                memcpy(g_buffer[write_buffer]+data_len[write_buffer], buffer+pos, buffer_space);
-                pos += buffer_space;
-                data_len[write_buffer] += buffer_space;
+                to_write = buffer_space;
+            } else {
+                to_write = aval_data;
+            }
 
-                if (buffer_space == 0) {
-                    CSPOT_LOG(error, "Buffer full");
-                }
+            memcpy(g_buffer[write_buffer]+data_len[write_buffer], buffer+pos, to_write);
+            pos += to_write;
 
-                // buffer full - switch to next
+            // set buffer length after making a copy to ensure this
+            // value won't be changed from another thread during comparison
+            uint32_t buffer_len = data_len[write_buffer] + to_write;
+            data_len[write_buffer] = buffer_len;
+
+            if (buffer_len == BUFFER_SIZE) {
                 write_buffer++;
                 if (write_buffer >= BUFFER_COUNT) write_buffer = 0;
-            } else {
-                memcpy(g_buffer[write_buffer]+data_len[write_buffer], buffer+pos, aval_data);
-                pos += aval_data;
-                data_len[write_buffer] += aval_data;
-
-                if (data_len[write_buffer] == BUFFER_SIZE) {
-                    write_buffer++;
-                    if (write_buffer >= BUFFER_COUNT) write_buffer = 0;
-                }
             }
         } else {
+            // CSPOT_LOG(debug, "buffer[%d] len: %d", write_buffer, data_len[write_buffer]);
             sceKernelDelayThread(50000);
         }
     }
@@ -100,3 +90,4 @@ void VitaAudioSink::volumeChanged(uint16_t volume) {
     int vol[2] = {volume, volume};
     sceAudioOutSetVolume(port, (SceAudioOutChannelFlag) (SCE_AUDIO_VOLUME_FLAG_L_CH | SCE_AUDIO_VOLUME_FLAG_R_CH), vol);
 }
+
