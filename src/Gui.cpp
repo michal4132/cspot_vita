@@ -248,6 +248,9 @@ void PlaybackScreen::drawPlayer() {
 
 // TODO(michal4132): refactor
 void PlaybackScreen::getPlaylists() {
+    playlists.clear();
+    playlist_uri.clear();
+
     uint8_t *json_data;
     size_t json_len = gui->api.get_current_users_playlists(&json_data, 10, 0);
 
@@ -447,8 +450,7 @@ void LoginScreen::draw() {
 
     // cspot logo
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + logo_width);
-    ImGui::Image(reinterpret_cast<void*>(logo_tex),
-                    ImVec2(logo_width, logo_height));
+    ImGui::Image(reinterpret_cast<void*>(logo_tex), ImVec2(logo_width, logo_height));
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
 
     username.draw(ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0.0f));
@@ -511,10 +513,8 @@ void GUI::init() {
         0,
     };
 
-    icon_font = io.Fonts->AddFontFromFileTTF(FONT_ICON_FILE_NAME_FAS,
-                                            48.0f, NULL, ranges);
-    playback_icon_font = io.Fonts->AddFontFromFileTTF(FONT_ICON_FILE_NAME_FAS,
-                                            96.0f, NULL, playback_ranges);
+    icon_font = io.Fonts->AddFontFromFileTTF(FONT_ICON_FILE_NAME_FAS, 48.0f, NULL, ranges);
+    playback_icon_font = io.Fonts->AddFontFromFileTTF(FONT_ICON_FILE_NAME_FAS, 96.0f, NULL, playback_ranges);
     io.Fonts->Build();
 
     // Setup style
@@ -563,4 +563,5 @@ void GUI::start() {
 
 GUI::~GUI() {
     delete login_screen;
+    delete playback_screen;
 }
