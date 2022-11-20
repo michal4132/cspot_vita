@@ -5,7 +5,7 @@ A Spotify player for PS Vita.
 
 *Only to be used with premium spotify accounts!*
 
-*Requires [iTLS-Enso](https://github.com/SKGleba/iTLS-Enso) or newer firmware.*
+*Requires latest firmware or [iTLS-Enso](https://github.com/SKGleba/iTLS-Enso) (untested).*
 
 ## Building
 
