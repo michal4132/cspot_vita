@@ -2,7 +2,7 @@
 
 #include <string>
 
-#define SPOTIFY_API_PLAY_URL                       "https://api.spotify.com/v1/me/player/play"
+#define SPOTIFY_API_PLAY_URL               "https://api.spotify.com/v1/me/player/play"
 #define SPOTIFY_API_GET_USERS_PLAYLISTS    "https://api.spotify.com/v1/me/playlists"
 
 class API {

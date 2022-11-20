@@ -21,7 +21,6 @@
 #include "Utils.h"
 #include "Gui.h"
 
-
 // TODO(michal4132):
 // - proper http downloader cleanup
 // - pause ImGui in sleep mode
@@ -118,7 +117,6 @@ int start_cspot(SceSize _args, void *_argp) {
             char *token = cJSON_GetObjectItem(root, "accessToken")->valuestring;
             gui->api.set_token(token);
             cJSON_Delete(root);
-            // free(token);
 
             CSPOT_LOG(debug, "response: %s", res->parts[0].data());
         };

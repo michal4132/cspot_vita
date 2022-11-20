@@ -80,6 +80,11 @@ void VitaAudioSink::feedPCMFrames(const uint8_t *buffer, size_t bytes) {
                 memcpy(g_buffer[write_buffer]+data_len[write_buffer], buffer+pos, aval_data);
                 pos += aval_data;
                 data_len[write_buffer] += aval_data;
+
+                if(data_len[write_buffer] == BUFFER_SIZE) {
+                    write_buffer++;
+                    if (write_buffer >= BUFFER_COUNT) write_buffer = 0;
+                }
             }
         } else {
             sceKernelDelayThread(50000);

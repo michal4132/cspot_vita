@@ -246,6 +246,7 @@ void PlaybackScreen::drawPlayer() {
     TextCentered(gui->artist);
 }
 
+// TODO(michal4132): refactor
 void PlaybackScreen::getPlaylists() {
     uint8_t *json_data;
     size_t json_len = gui->api.get_current_users_playlists(&json_data, 10, 0);
