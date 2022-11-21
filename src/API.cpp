@@ -32,7 +32,13 @@ int API::get_current_users_playlists(uint8_t **buf, uint16_t limit, uint16_t off
                         {"Content-Type", "application/json"},
                         {"Authorization", "Bearer " + token} };
 
-    int len = download(SPOTIFY_API_GET_USERS_PLAYLISTS, buf, SCE_HTTP_METHOD_GET, "", headers);
+    std::string url = SPOTIFY_API_GET_USERS_PLAYLISTS;
+    url += "?limit=";
+    url += std::to_string(limit);
+    url += "&offset=";
+    url += std::to_string(offset);
+
+    int len = download(url.c_str(), buf, SCE_HTTP_METHOD_GET, "", headers);
     if (len <= 0) {
         buf = NULL;
         return 0;
@@ -41,3 +47,36 @@ int API::get_current_users_playlists(uint8_t **buf, uint16_t limit, uint16_t off
     CSPOT_LOG(info, "get_current_users_playlists response: %s", &buf);
     return len;
 }
+
+int API::get_playlist_items(uint8_t **buf, std::string playlist_id, std::string fields,
+                                        uint16_t limit, uint16_t offset) {
+    Headers headers = { {"Accept", "application/json"},
+                        {"Content-Type", "application/json"},
+                        {"Authorization", "Bearer " + token} };
+
+    std::string url = "";
+    if (playlist_id.starts_with("https://api.spotify.com/v1/playlists/")) {
+        url += playlist_id;
+
+    } else {
+        url += SPOTIFY_API_GET_PLAYLIST_ITEMS_s;
+        url += playlist_id;
+        url += SPOTIFY_API_GET_PLAYLIST_ITEMS_e;
+    }
+    url += "?fields=";
+    url += fields;
+    url += "&limit=";
+    url += std::to_string(limit);
+    url += "&offset=";
+    url += std::to_string(offset);
+
+    int len = download(url.c_str(), buf, SCE_HTTP_METHOD_GET, "", headers);
+    if (len <= 0) {
+        buf = NULL;
+        return 0;
+    }
+
+    CSPOT_LOG(info, "get_playlist_items response: %s", &buf);
+    return len;
+}
+

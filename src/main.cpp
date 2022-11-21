@@ -177,6 +177,8 @@ int start_cspot(SceSize _args, void *_argp) {
             mercuryManager->updateQueue();
             sceKernelDelayThread(10000);
         }
+
+        spircController->disconnect();
     }
     // login failed, back to login
     gui->set_screen(gui->login_screen);

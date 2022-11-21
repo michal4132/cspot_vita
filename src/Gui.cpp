@@ -3,6 +3,7 @@
 #include "Utils.h"
 #include <Logger.h>
 #include "Font.h"
+#include <JSONObject.h>
 
 #define INPUT_USERNAME_HINT           "Username"
 #define INPUT_PASSWORD_HINT           "Password"
@@ -20,20 +21,6 @@
                                      | ImGuiWindowFlags_NoResize        \
                                      | ImGuiWindowFlags_NoCollapse)
 #define MENU_BUTTON_SIZE              ImVec2(68.0f, 68.0f)
-
-using namespace sce::Json; // NOLINT
-
-class Allocator : public MemAllocator {
- public:
-    Allocator() {}
-
-    void* allocateMemory(size_t size, void *unk) override {
-        return malloc(size);
-    }
-    void freeMemory(void *ptr, void *unk) override {
-        free(ptr);
-    }
-};
 
 // Logger buffer
 static ImGuiTextBuffer Buf;
@@ -246,86 +233,93 @@ void PlaybackScreen::drawPlayer() {
     TextCentered(gui->artist);
 }
 
-// TODO(michal4132): refactor
+void PlaybackScreen::getTracks(uint16_t index) {
+    std::string uri = playlist_uri[index];
+
+    if (!uri.starts_with(SPOTIFY_PLAYLIST_HEADER)) {
+        return;
+    }
+    uri.erase(0, strlen(SPOTIFY_PLAYLIST_HEADER));
+
+    if (index >= tracks.size()) {
+        tracks.resize(index + 1);
+    } else {
+        tracks[index].clear();
+    }
+
+    bool next = true;
+    uint32_t pos = 0;
+
+    while (next) {
+        uint8_t *json_data;
+        size_t json_len = gui->api.get_playlist_items(&json_data, uri, SPOTIFY_PLAYLIST_FIELDS,
+                                                                    SPOTIFY_TRACK_FETCH_CHUNK_SIZE, pos);
+
+        if (json_len <= 0) {
+            CSPOT_LOG(error, "error requesting songs from playlist");
+            return;
+        }
+
+        cJSON *root = cJSON_Parse((const char *) json_data);
+        cJSON *json_next = cJSON_GetObjectItem(root, "next");
+        cJSON *json_items = cJSON_GetObjectItem(root, "items");
+
+        uint32_t tracks_in_chunk = cJSON_GetArraySize(json_items);
+
+        for (uint32_t i = 0; i < tracks_in_chunk; i++) {
+            cJSON *item = cJSON_GetArrayItem(json_items, i);
+            cJSON *track = cJSON_GetObjectItem(item, "track");
+            cJSON *name = cJSON_GetObjectItem(track, "name");
+            tracks[index].push_back(std::string(name->valuestring));
+            pos++;
+        }
+
+        if (cJSON_IsNull(json_next)) {
+            next = false;
+        }
+        cJSON_Delete(root);
+        sce_paf_free(json_data);
+    }
+}
+
 void PlaybackScreen::getPlaylists() {
     playlists.clear();
     playlist_uri.clear();
 
-    uint8_t *json_data;
-    size_t json_len = gui->api.get_current_users_playlists(&json_data, 10, 0);
+    bool next = true;
+    uint32_t pos = 0;
 
-    // Create a MemAllocator derivative.
-    Allocator* alloc = new Allocator();
+    while (next) {
+        uint8_t *json_data;
+        size_t json_len = gui->api.get_current_users_playlists(&json_data, SPOTIFY_PLAYLIST_FETCH_CHUNK_SIZE, pos);
 
-    InitParameter params;
-    params.allocator = alloc;
-    params.bufSize = 100;
-
-    Initializer init = Initializer();
-    int ret = init.initialize(&params);  // Initialization at last!
-
-    Value val = Value();  // Creating our Root value.
-    Parser::parse(val, (const char*) json_data, json_len);
-
-    for (int i = 0; i < val.count(); i++) {
-        String s = String();
-        const Value& v = val.getValue(i);
-        CSPOT_LOG(info, "Child %d", i);
-
-        switch (v.getType()) {
-            case ValueType::BoolValue:
-            case ValueType::IntValue:
-            case ValueType::UIntValue:
-            case ValueType::RealValue:
-                v.toString(s);
-                CSPOT_LOG(info, "Value: %s", s.c_str());
-                break;
-            case ValueType::StringValue:
-                CSPOT_LOG(info, "Value: %s", v.getString().c_str());
-                break;
-            case ValueType::ArrayValue: {
-                CSPOT_LOG(info, "Child %d is an Array. Iterating though values.", i);
-                const Array& arr = v.getArray();
-                int j = 0;
-                for (Array::iterator it = arr.begin(); it != arr.end(); it++) {
-                    Value& va = *it;
-                    switch (va.getType()) {
-                        case ValueType::ObjectValue: {
-                                const Object& obj = va.getObject();
-                                for (Object::Pair& pair : obj) {
-                                    if (pair.key == "name") {
-                                        CSPOT_LOG(info, "Track: %s", pair.value.getString().c_str());
-                                        playlists.push_back(std::string(pair.value.getString().c_str()));
-                                    } else if (pair.key == "uri") {
-                                        playlist_uri.push_back(std::string(pair.value.getString().c_str()));
-                                    }
-                                }
-                            }
-                            break;
-                        case ValueType::BoolValue:
-                        case ValueType::IntValue:
-                        case ValueType::UIntValue:
-                        case ValueType::RealValue:
-                            va.toString(s);
-                            CSPOT_LOG(info, "Value %d: %s", j, s.c_str());
-                            break;
-                        case ValueType::StringValue:
-                            CSPOT_LOG(info, "Value %d: %s", j, va.getString().c_str());
-                            break;
-                        default:
-                            CSPOT_LOG(info, "Value is null");
-                        }
-                        s.clear();
-                        ++j;
-                    }
-                }
-                break;
-            default:
-                CSPOT_LOG(info, "Value is null");
+        if (json_len <= 0) {
+            CSPOT_LOG(error, "error requesting playlists");
+            return;
         }
+
+        cJSON *root = cJSON_Parse((const char *) json_data);
+        cJSON *json_next = cJSON_GetObjectItem(root, "next");
+        cJSON *json_items = cJSON_GetObjectItem(root, "items");
+        uint32_t playlists_in_chunk = cJSON_GetArraySize(json_items);
+
+        for (uint32_t i = 0; i < playlists_in_chunk; i++) {
+            cJSON *item = cJSON_GetArrayItem(json_items, i);
+            cJSON *uri = cJSON_GetObjectItem(item, "uri");
+            cJSON *name = cJSON_GetObjectItem(item, "name");
+
+            playlists.push_back(std::string(name->valuestring));
+            playlist_uri.push_back(std::string(cJSON_GetObjectItem(item, "uri")->valuestring));
+
+            pos++;
+        }
+
+        if (cJSON_IsNull(json_next)) {
+            next = false;
+        }
+        cJSON_Delete(root);
+        sce_paf_free(json_data);
     }
-    init.terminate();
-    sce_paf_free(json_data);
 }
 
 void PlaybackScreen::drawSubmenu() {
@@ -344,17 +338,27 @@ void PlaybackScreen::drawSubmenu() {
         case Submenu::PLAYLISTS:
             for (uint16_t i = 0; i < playlists.size(); i++) {
                 if (ImGui::TreeNode((void*)(intptr_t)i, playlists[i].c_str())) {
+                    // track list not yet loaded
+                    if (i >= tracks.size() || tracks[i].size() == 0) {
+                        CSPOT_LOG(debug, "request track list for playlist: %s", playlists[i].c_str());
+                        getTracks(i);
+                    }
+
+                    // play button
                     if (ImGui::Button("Play")) {
                         gui->activateDevice();
                         gui->api.play_by_uri(playlist_uri[i], 0, 0);
                     }
-                    ImGui::Button("Track 1");
-                    ImGui::Button("Track 2");
-                    ImGui::Button("Track 3");
-                    ImGui::Button("Track 4");
-                    ImGui::Button("Track 5");
-                    ImGui::Button("Track 6");
-                    ImGui::Button("Track 7");
+
+                    // each song in playlist
+                    if (i < tracks.size()) {
+                        for (uint32_t track_offset = 0; track_offset < tracks[i].size(); track_offset++) {
+                            if (ImGui::Button(tracks[i][track_offset].c_str())) {
+                                gui->activateDevice();
+                                gui->api.play_by_uri(playlist_uri[i], track_offset, 0);
+                            }
+                        }
+                    }
                     ImGui::TreePop();
                 }
             }

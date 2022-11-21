@@ -24,8 +24,8 @@ project(cspot_vita C CXX)
 include("${VITASDK}/share/vita.cmake" REQUIRED)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -std=c++11")
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -std=c++20")
+set(CMAKE_CXX_STANDARD 20)
 
 # patch CSpot and bell
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/patch/Queue.h

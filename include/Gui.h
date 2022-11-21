@@ -59,6 +59,7 @@ class PlaybackScreen: public Screen {
     void drawPlayer();
     void drawSubmenu();
     void drawButtons();
+    void getTracks(uint16_t index);
     void getPlaylists();
     void setCoverArt(std::string url);
 
@@ -71,6 +72,7 @@ class PlaybackScreen: public Screen {
     };
     std::vector<std::string> playlists;
     std::vector<std::string> playlist_uri;
+    std::vector<std::vector<std::string>> tracks;
     std::vector<bool> tracks_loaded;
     Submenu submenu = Submenu::LOG;
     int cover_art_width = 0;
