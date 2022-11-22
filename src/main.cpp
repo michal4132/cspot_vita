@@ -17,6 +17,7 @@
 
 #include "CliFile.h"
 #include "VitaAudioSink.h"
+#include "PlaybackScreen.h"
 #include "Keyboard.h"
 #include "Utils.h"
 #include "Gui.h"
@@ -104,8 +105,6 @@ int start_cspot(SceSize _args, void *_argp) {
 
         spircController = std::make_shared<SpircController>(mercuryManager, blob->username, audioSink);
 
-        gui->cspot_started = true;
-
         // Request token for player control
         mercuryCallback responseLambda = [=](std::unique_ptr<MercuryResponse> res) {
             if (res->parts.size() == 0) {
@@ -116,8 +115,8 @@ int start_cspot(SceSize _args, void *_argp) {
             cJSON *root = cJSON_Parse((const char *) res->parts[0].data());
             char *token = cJSON_GetObjectItem(root, "accessToken")->valuestring;
             gui->api.set_token(token);
+            gui->cspot_started = true;
             cJSON_Delete(root);
-
             CSPOT_LOG(debug, "response: %s", res->parts[0].data());
         };
         mercuryManager->execute(MercuryType::GET, "hm://keymaster/token/authenticated?scope="
@@ -127,25 +126,18 @@ int start_cspot(SceSize _args, void *_argp) {
         // Add event handler
         spircController->setEventHandler([gui](CSpotEvent &event) {
             switch (event.eventType) {
-            case CSpotEventType::TRACK_INFO: {
-                TrackInfo track = std::get<TrackInfo>(event.data);
-                gui->setTrack(track.name, track.album, track.artist, track.imageUrl);
-                break;
-            }
-            case CSpotEventType::PLAY_PAUSE: {
-                gui->setPause(std::get<bool>(event.data));
-                break;
-            }
-            // case CSpotEventType::PLAYBACK_START: {
-            //     this->audioBuffer->clearBuffer();
-            //     break;
-            // }
-            // case CSpotEventType::SEEK: {
-            //     this->audioBuffer->clearBuffer();
-            //     break;
-            // }
-            default:
-                break;
+                case CSpotEventType::TRACK_INFO: {
+                    TrackInfo track = std::get<TrackInfo>(event.data);
+                    ((PlaybackScreen*) gui->playback_screen)->setTrack(track.name, track.album,
+                                                                            track.artist, track.imageUrl);
+                    break;
+                }
+                case CSpotEventType::PLAY_PAUSE: {
+                    ((PlaybackScreen*) gui->playback_screen)->setPause(std::get<bool>(event.data));
+                    break;
+                }
+                default:
+                    break;
             }
         });
 

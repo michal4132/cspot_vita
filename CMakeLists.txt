@@ -53,6 +53,9 @@ add_executable(${PROJECT_NAME}
   src/VitaAudioSink.cpp
   src/imgui_demo.cpp
   src/Gui.cpp
+  src/PlaybackScreen.cpp
+  src/LoginScreen.cpp
+  src/GuiUtils.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

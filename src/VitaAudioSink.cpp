@@ -75,6 +75,11 @@ void VitaAudioSink::feedPCMFrames(const uint8_t *buffer, size_t bytes) {
                 write_buffer++;
                 if (write_buffer >= BUFFER_COUNT) write_buffer = 0;
             }
+
+            if (buffer_len > BUFFER_SIZE) {
+                CSPOT_LOG(error, "buffer overflow");
+            }
+
         } else {
             // CSPOT_LOG(debug, "buffer[%d] len: %d", write_buffer, data_len[write_buffer]);
             sceKernelDelayThread(50000);
