@@ -7,6 +7,10 @@ void API::set_token(std::string _token) {
 }
 
 void API::play_by_uri(std::string uri, uint32_t offset_pos, uint32_t position_ms) {
+    if (token.size() == 0) {
+        return;
+    }
+
     // TODO(michal4132): Replace with json object
     std::string post_data = "{\"context_uri\": \"";
     post_data += uri;
@@ -28,6 +32,10 @@ void API::play_by_uri(std::string uri, uint32_t offset_pos, uint32_t position_ms
 
 // TODO(michal4132): limit, offset
 int API::get_current_users_playlists(uint8_t **buf, uint16_t limit, uint16_t offset) {
+    if (token.size() == 0) {
+        return -1;
+    }
+
     Headers headers = { {"Accept", "application/json"},
                         {"Content-Type", "application/json"},
                         {"Authorization", "Bearer " + token} };
@@ -50,6 +58,10 @@ int API::get_current_users_playlists(uint8_t **buf, uint16_t limit, uint16_t off
 
 int API::get_playlist_items(uint8_t **buf, std::string playlist_id, std::string fields,
                                         uint16_t limit, uint16_t offset) {
+    if (token.size() == 0) {
+        return -1;
+    }
+
     Headers headers = { {"Accept", "application/json"},
                         {"Content-Type", "application/json"},
                         {"Authorization", "Bearer " + token} };
