@@ -363,6 +363,15 @@ void PlaybackScreen::drawSubmenu() {
                 }
             }
             break;
+        case Submenu::SETTINGS:
+            if (ImGui::Button("Refresh playlists")) {
+                playlists.clear();
+                playlist_uri.clear();
+            }
+            if (ImGui::Button("Refresh tracks")) {
+                tracks.clear();
+            }
+            break;
         default:
             break;
     }
@@ -395,7 +404,9 @@ void PlaybackScreen::drawButtons() {
     ImGui::SameLine();
 
     if (StyleButton(ICON_FA_MUSIC, MENU_BUTTON_SIZE, submenu == Submenu::PLAYLISTS)) {
-        getPlaylists();
+        if (playlist_uri.size() == 0) {
+            getPlaylists();
+        }
         submenu = Submenu::PLAYLISTS;
     }
     ImGui::SameLine();
