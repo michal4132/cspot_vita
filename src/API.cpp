@@ -11,6 +11,10 @@ void API::play_by_uri(std::string uri, uint32_t offset_pos, uint32_t position_ms
         return;
     }
 
+    std::string url = SPOTIFY_API_PLAY_URL;
+    url += "?device_id=";
+    url += DEVICE_ID;
+
     // TODO(michal4132): Replace with json object
     std::string post_data = "{\"context_uri\": \"";
     post_data += uri;
@@ -23,7 +27,7 @@ void API::play_by_uri(std::string uri, uint32_t offset_pos, uint32_t position_ms
     Headers headers = { {"Accept", "application/json"},
                         {"Content-Type", "application/json"},
                         {"Authorization", "Bearer " + token} };
-    int len = download(SPOTIFY_API_PLAY_URL, &buf, SCE_HTTP_METHOD_PUT, post_data, headers);
+    int len = download(url.c_str(), &buf, SCE_HTTP_METHOD_PUT, post_data, headers);
     if (len > 0) {
         CSPOT_LOG(info, "play_by_uri response: %.*s", len, buf);
         sce_paf_free(buf);

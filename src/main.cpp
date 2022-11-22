@@ -22,6 +22,7 @@
 #include "Utils.h"
 #include "GuiUtils.h"
 #include "Gui.h"
+#include "API.h"
 
 // TODO(michal4132):
 // - proper http downloader cleanup
@@ -76,11 +77,6 @@ SceVoid watch_dog(SceSize _args, void *_argp) {
 void login_cspot(const char *user, const char *password) {
     blob->loadUserPass(user, password);
 }
-
-// TODO(michal4132): get from cspot
-#define CLIENT_ID_ANDROID "65b708073fc0480ea92a077233ca87bd"
-#define DEVICE_ID         "142137fd329622137a14901634264e6f332e2411"
-#define SCOPES            "user-read-playback-state,user-modify-playback-state,playlist-read-private,playlist-read-collaborative"  // NOLINT
 
 int start_cspot(SceSize _args, void *_argp) {
     GUI* gui = *((GUI**)_argp);
