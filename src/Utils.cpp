@@ -106,6 +106,9 @@ int download(const char *url, uint8_t **return_buffer, int method, std::string p
         //  }
         // } while(res > 0);
     } else {
+        if (length == 0) {
+            return length;
+        }
         recv_buffer = sce_paf_memalign(0x40, (SceSize)length);
         if (recv_buffer == NULL) {
             CSPOT_LOG(error, "sce_paf_memalign return to NULL. length=0x%08X\n", (SceSize)length);

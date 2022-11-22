@@ -24,8 +24,8 @@ void API::play_by_uri(std::string uri, uint32_t offset_pos, uint32_t position_ms
                         {"Content-Type", "application/json"},
                         {"Authorization", "Bearer " + token} };
     int len = download(SPOTIFY_API_PLAY_URL, &buf, SCE_HTTP_METHOD_PUT, post_data, headers);
-    if (len != 0) {
-        CSPOT_LOG(info, "play_by_uri response: %s", *buf);
+    if (len > 0) {
+        CSPOT_LOG(info, "play_by_uri response: %.*s", len, buf);
         sce_paf_free(buf);
     }
 }
@@ -52,7 +52,7 @@ int API::get_current_users_playlists(uint8_t **buf, uint16_t limit, uint16_t off
         return 0;
     }
 
-    CSPOT_LOG(info, "get_current_users_playlists response: %s", *buf);
+    CSPOT_LOG(info, "get_current_users_playlists response: %.*s", len, *buf);
     return len;
 }
 
@@ -88,7 +88,7 @@ int API::get_playlist_items(uint8_t **buf, std::string playlist_id, std::string 
         return 0;
     }
 
-    CSPOT_LOG(info, "get_playlist_items response: %s", *buf);
+    CSPOT_LOG(info, "get_playlist_items response: %.*s", len, *buf);
     return len;
 }
 
