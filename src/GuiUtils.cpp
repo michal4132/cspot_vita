@@ -1,9 +1,12 @@
+#include <mutex>  // NOLINT
 #include "GuiUtils.h"
 #include "Keyboard.h"
 
-// Logger buffer
+// Logger
 static ImGuiTextBuffer Buf;
 static bool ScrollToBottom;
+FILE *logger_fp;
+std::mutex log_mutex;
 
 ImGuiTextBuffer *getBuf() {
     return &Buf;
@@ -17,25 +20,48 @@ void setScrollToBottom(bool v) {
     ScrollToBottom = v;
 }
 
+void init_logger() {
+    logger_fp = fopen("ux0:data/cspot/log.txt", "w");
+}
+
+void flush_logger() {
+    fflush(logger_fp);
+}
+
 // override printf for cspot
 int print_to_menu(const char* fmt, ...) {
+    std::lock_guard<std::mutex> guard(log_mutex);
     if (Buf.size() > 6096) {
         Buf.clear();
+        flush_logger();
     }
-    va_list args;
+    va_list args, args2;
     va_start(args, fmt);
+    va_copy(args2, args);
     Buf.appendfv(fmt, args);
+    if (logger_fp != NULL) {
+        vfprintf(logger_fp, fmt, args);
+    }
     va_end(args);
+    va_end(args2);
     ScrollToBottom = true;
     return 0;
 }
 
 // override vprintf for cspot
 int vprint_to_menu(const char* fmt, va_list args) {
+    std::lock_guard<std::mutex> guard(log_mutex);
     if (Buf.size() > 6096) {
         Buf.clear();
+        flush_logger();
     }
+    va_list args2;
+    va_copy(args2, args);
     Buf.appendfv(fmt, args);
+    if (logger_fp != NULL) {
+        vfprintf(logger_fp, fmt, args2);
+    }
+    va_end(args2);
     ScrollToBottom = true;
     return 0;
 }

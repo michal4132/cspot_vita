@@ -43,3 +43,6 @@ bool StyleButton(const char* label, ImVec2 btn_size, bool active = false);
 void AlignForWidth(float width, float alignment = 0.5f);
 void TextCentered(std::string text);
 ImGuiTextBuffer *getBuf();
+void init_logger();
+void flush_logger();
+

@@ -20,6 +20,7 @@
 #include "PlaybackScreen.h"
 #include "Keyboard.h"
 #include "Utils.h"
+#include "GuiUtils.h"
 #include "Gui.h"
 
 // TODO(michal4132):
@@ -113,11 +114,10 @@ int start_cspot(SceSize _args, void *_argp) {
             }
 
             cJSON *root = cJSON_Parse((const char *) res->parts[0].data());
-            char *token = cJSON_GetObjectItem(root, "accessToken")->valuestring;
-            gui->api.set_token(token);
+            gui->api.set_token(cJSON_GetObjectItem(root, "accessToken")->valuestring);
             gui->cspot_started = true;
             cJSON_Delete(root);
-            CSPOT_LOG(debug, "response: %s", res->parts[0].data());
+            CSPOT_LOG(debug, "Got token");
         };
         mercuryManager->execute(MercuryType::GET, "hm://keymaster/token/authenticated?scope="
                             + std::string(SCOPES) +"&client_id="
@@ -186,6 +186,7 @@ int print_to_menu(const char* fmt, ...);
 int vprint_to_menu(const char* fmt, va_list args);
 
 int main(void) {
+    init_logger();
     bell::setDefaultLogger();
     bell::disableColors();
     bell::function_printf = &print_to_menu;
@@ -228,6 +229,8 @@ int main(void) {
 
     gui.start();
 
+    flush_logger();
+
     sceAppMgrReleaseBgmPort();
     term_network();
 
@@ -235,6 +238,8 @@ int main(void) {
     sceKernelWaitThreadEnd(cspot_id, NULL, NULL);
     sceKernelDeleteThread(watch_id);
     sceKernelDeleteThread(cspot_id);
+
+    flush_logger();
 
     sceKernelExitProcess(0);  // DO NOT REMOVE
     return 0;

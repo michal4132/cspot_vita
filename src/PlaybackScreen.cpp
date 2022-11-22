@@ -109,6 +109,7 @@ void PlaybackScreen::drawPlayer() {
 }
 
 void PlaybackScreen::getTracks(uint16_t index) {
+    CSPOT_LOG(debug, "Get tracks for playlist: %d", index);
     std::string uri = playlist_uri[index];
 
     if (!uri.starts_with(SPOTIFY_PLAYLIST_HEADER)) {
@@ -151,9 +152,11 @@ void PlaybackScreen::getTracks(uint16_t index) {
         cJSON_Delete(root);
         sce_paf_free(json_data);
     }
+    CSPOT_LOG(debug, "Got %d tracks", pos);
 }
 
 void PlaybackScreen::getPlaylists() {
+    CSPOT_LOG(debug, "Get playlists");
     playlists.clear();
     playlist_uri.clear();
 
@@ -185,6 +188,8 @@ void PlaybackScreen::getPlaylists() {
         cJSON_Delete(root);
         sce_paf_free(json_data);
     }
+
+    CSPOT_LOG(debug, "Got %d playlists", playlists.size());
 }
 
 void PlaybackScreen::drawSubmenu() {

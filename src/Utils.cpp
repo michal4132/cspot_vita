@@ -86,7 +86,7 @@ int download(const char *url, uint8_t **return_buffer, int method, std::string p
     }
 
     res = sceHttpGetResponseContentLength(req, &length);
-    CSPOT_LOG(info, "sceHttpGetResponseContentLength=0x%X", res);
+    CSPOT_LOG(info, "sceHttpGetResponseContentLength=0x%X, %d", res, length);
 
     SceUID fd;
     void *recv_buffer;
