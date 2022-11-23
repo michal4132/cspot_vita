@@ -38,6 +38,9 @@ add_compile_definitions(BELL_USE_MBEDTLS)
 add_compile_definitions(VITA)
 add_subdirectory("cspot/cspot" ${CMAKE_CURRENT_BINARY_DIR}/cspot)
 
+find_package(CURL REQUIRED)
+find_package(OpenSSL REQUIRED)
+
 include_directories(
   ${CMAKE_SOURCE_DIR}/include
   ${CMAKE_SOURCE_DIR}/cspot/cspot/include
@@ -91,6 +94,9 @@ target_link_libraries(${PROJECT_NAME}
   SceTouch_stub
   SceLibJson_stub
   taihen_stub
+  ${CURL_LIBRARIES}
+  ${OPENSSL_LIBRARIES}
+  z
 )
 
 vita_create_self(eboot.bin

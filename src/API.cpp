@@ -27,7 +27,7 @@ void API::play_by_uri(std::string uri, uint32_t offset_pos, uint32_t position_ms
     Headers headers = { {"Accept", "application/json"},
                         {"Content-Type", "application/json"},
                         {"Authorization", "Bearer " + token} };
-    int len = download(url.c_str(), &buf, SCE_HTTP_METHOD_PUT, post_data, headers);
+    int len = download(url.c_str(), &buf, "PUT", post_data, headers);
     if (len > 0) {
         CSPOT_LOG(info, "play_by_uri response: %.*s", len, buf);
         sce_paf_free(buf);
@@ -50,7 +50,7 @@ int API::get_current_users_playlists(uint8_t **buf, uint16_t limit, uint16_t off
     url += "&offset=";
     url += std::to_string(offset);
 
-    int len = download(url.c_str(), buf, SCE_HTTP_METHOD_GET, "", headers);
+    int len = download(url.c_str(), buf, "GET", "", headers);
     if (len <= 0) {
         buf = NULL;
         return 0;
@@ -86,7 +86,7 @@ int API::get_playlist_items(uint8_t **buf, std::string playlist_id, std::string 
     url += "&offset=";
     url += std::to_string(offset);
 
-    int len = download(url.c_str(), buf, SCE_HTTP_METHOD_GET, "", headers);
+    int len = download(url.c_str(), buf, "GET", "", headers);
     if (len <= 0) {
         buf = NULL;
         return 0;

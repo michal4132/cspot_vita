@@ -39,7 +39,7 @@ bool LoadTextureFromMemory(const uint8_t* buffer, uint32_t length,
 int is_dir(const char *path);
 void init_network();
 void term_network();
-int download(const char *url, uint8_t **return_buffer, int method = SCE_HTTP_METHOD_GET,
+int download(const char *url, uint8_t **return_buffer, const char *method = "GET",
                         std::string post_data = "", Headers headers = {});
 bool cache_cover_art(std::string url, uint8_t *buffer, uint32_t length);
 std::string cover_art_path(std::string url);

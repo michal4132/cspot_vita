@@ -35,7 +35,7 @@ void PlaybackScreen::setCoverArt(std::string url) {
             LoadTextureFromMemory(cover_art_png, cover_art_png_len,
                                   &cover_art_tex, &cover_art_width, &cover_art_height);
             cache_cover_art(url, cover_art_png, cover_art_png_len);
-            sce_paf_free(cover_art_png);
+            free(cover_art_png);
             cover_art_png = NULL;
         }
     }
@@ -133,10 +133,15 @@ void PlaybackScreen::getTracks(uint16_t index) {
 
         if (json_len <= 0) {
             CSPOT_LOG(error, "error requesting songs from playlist");
+            tracks[index].push_back("No tracks");
             return;
         }
 
         cJSON *root = cJSON_Parse((const char *) json_data);
+        if (!cJSON_HasObjectItem(root, "items")) {
+            tracks[index].push_back("No tracks");
+            return;
+        }
         cJSON *json_next = cJSON_GetObjectItem(root, "next");
         cJSON *json_items = cJSON_GetObjectItem(root, "items");
         uint32_t tracks_in_chunk = cJSON_GetArraySize(json_items);
@@ -150,7 +155,7 @@ void PlaybackScreen::getTracks(uint16_t index) {
 
         next = !cJSON_IsNull(json_next);
         cJSON_Delete(root);
-        sce_paf_free(json_data);
+        free(json_data);
     }
     CSPOT_LOG(debug, "Got %d tracks", pos);
 }
@@ -173,6 +178,9 @@ void PlaybackScreen::getPlaylists() {
         }
 
         cJSON *root = cJSON_Parse((const char *) json_data);
+        if (!cJSON_HasObjectItem(root, "items")) {
+            return;
+        }
         cJSON *json_next = cJSON_GetObjectItem(root, "next");
         cJSON *json_items = cJSON_GetObjectItem(root, "items");
         uint32_t playlists_in_chunk = cJSON_GetArraySize(json_items);
@@ -186,7 +194,7 @@ void PlaybackScreen::getPlaylists() {
 
         next = !cJSON_IsNull(json_next);
         cJSON_Delete(root);
-        sce_paf_free(json_data);
+        free(json_data);
     }
 
     CSPOT_LOG(debug, "Got %d playlists", playlists.size());

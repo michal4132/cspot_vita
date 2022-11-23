@@ -1,4 +1,5 @@
 #include "Utils.h"
+#include <curl/curl.h>
 #include <psp2/net/netctl.h>
 #include <psp2/sysmodule.h>
 #include <psp2/io/stat.h>
@@ -8,6 +9,29 @@
 #include "image/stb_image.h"
 
 #define USER_AGENT "Spotify/8.6.84 iOS/15.1 (iPhone11,8)"
+
+struct MemoryStruct {
+  char *memory;
+  size_t size;
+};
+
+static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp) {
+    size_t realsize = size * nmemb;
+    struct MemoryStruct *mem = (struct MemoryStruct *)userp;
+
+    char *ptr = (char *) realloc(mem->memory, mem->size + realsize + 1);
+    if (!ptr) {
+        CSPOT_LOG(error, "not enough memory (realloc returned NULL)");
+        return 0;
+    }
+
+    mem->memory = ptr;
+    memcpy(&(mem->memory[mem->size]), contents, realsize);
+    mem->size += realsize;
+    mem->memory[mem->size] = 0;
+
+    return realsize;
+}
 
 bool init_downloader() {
     int res, tpl, conn, req;
@@ -53,85 +77,52 @@ bool cache_cover_art(std::string url, uint8_t *buffer, uint32_t length) {
     return true;
 }
 
-int download(const char *url, uint8_t **return_buffer, int method, std::string post_data, Headers headers) {
-    int res, tpl, conn, req;
-    SceUInt64 length = 0;
+int download(const char *url, uint8_t **return_buffer, const char *method, std::string post_data, Headers headers) {
+    CURL *curl_handle;
+    CURLcode res;
 
-    tpl = sceHttpCreateTemplate(USER_AGENT, 2, 1);
-    if (tpl < 0) {
-        CSPOT_LOG(error, "sceHttpCreateTemplate failed (0x%X)\n", tpl);
-        return 0;
+    struct MemoryStruct chunk;
+    chunk.memory = (char *) malloc(1);
+    chunk.size = 0;
+
+    curl_handle = curl_easy_init();
+    curl_easy_setopt(curl_handle, CURLOPT_URL, url);
+    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
+    curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, USER_AGENT);
+    curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 0L);
+    curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0L);
+    curl_easy_setopt(curl_handle, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
+    curl_easy_setopt(curl_handle, CURLOPT_CUSTOMREQUEST, method);
+
+    if (post_data.size() != 0) {
+        curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, post_data.c_str());
+        curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDSIZE, -1L);
     }
 
-    conn = sceHttpCreateConnectionWithURL(tpl, url, 0);
-    if (conn < 0) {
-        CSPOT_LOG(error, "sceHttpCreateConnectionWithURL failed (0x%X)", conn);
-        goto http_del_temp;
-    }
-
-    req = sceHttpCreateRequestWithURL(conn, method, url, post_data.length());
-    if (req < 0) {
-        CSPOT_LOG(error, "sceHttpCreateRequestWithURL failed (0x%X)", req);
-        goto http_del_conn;
-    }
-
+    struct curl_slist *headerchunk = NULL;
     for (auto it : headers) {
-        sceHttpAddRequestHeader(req, it.first.c_str(), it.second.c_str(), SCE_HTTP_HEADER_OVERWRITE);
+        headerchunk = curl_slist_append(headerchunk, (it.first + ": " + it.second).c_str());
     }
+    res = curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, headerchunk);
 
-    res = sceHttpSendRequest(req, post_data.c_str(), post_data.length());
-    if (res < 0) {
-        CSPOT_LOG(error, "sceHttpSendRequest failed (0x%X)", res);
-        goto http_del_req;
-    }
+    // Perform the request
+    res = curl_easy_perform(curl_handle);
+    int httpresponsecode = 0;
+    curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &httpresponsecode);
+    CSPOT_LOG(debug, "response code: %d", httpresponsecode);
 
-    res = sceHttpGetResponseContentLength(req, &length);
-    CSPOT_LOG(info, "sceHttpGetResponseContentLength=0x%X, %d", res, length);
-
-    SceUID fd;
-    void *recv_buffer;
-
-    if (res < 0) {
-        CSPOT_LOG(error, "No length");  // TODO(michal4132)
-        length = 0;
-        // recv_buffer = sce_paf_memalign(0x40, 0x40000);
-        // if(recv_buffer == NULL){
-            // CSPOT_LOG(error, "sce_paf_memalign return to NULL");
-            // goto http_abort_req;
-        // }
-        // do {
-        //  res = sceHttpReadData(req, recv_buffer, 0x40000);
-        //  if(res > 0){
-        //      res = sceIoWrite(fd, recv_buffer, res);
-        //  }
-        // } while(res > 0);
+    if (res != CURLE_OK) {
+        CSPOT_LOG(error, "curl_easy_perform() failed: %s", curl_easy_strerror(res));
+        // TODO(michal4132): need free chunk.memory???
+        *return_buffer = NULL;
+        chunk.size = 0;
     } else {
-        if (length == 0) {
-            return length;
-        }
-        recv_buffer = sce_paf_memalign(0x40, (SceSize)length);
-        if (recv_buffer == NULL) {
-            CSPOT_LOG(error, "sce_paf_memalign return to NULL. length=0x%08X\n", (SceSize)length);
-            goto http_abort_req;
-        }
-
-        res = sceHttpReadData(req, recv_buffer, (SceSize)length);
-        if (res > 0) {
-            *return_buffer = (uint8_t *) recv_buffer;
-        } else {
-            length = 0;
-        }
+        CSPOT_LOG(debug, "%zu bytes retrieved", chunk.size);
+        *return_buffer = (uint8_t *) chunk.memory;
     }
-
-http_abort_req:
-    sceHttpAbortRequest(req);
-http_del_req:
-    sceHttpDeleteRequest(req);
-http_del_conn:
-    sceHttpDeleteConnection(conn);
-http_del_temp:
-    sceHttpDeleteTemplate(tpl);
-    return length;
+    curl_easy_cleanup(curl_handle);
+    return chunk.size;
 }
 
 // Simple helper function to load an image into a OpenGL texture with common settings
