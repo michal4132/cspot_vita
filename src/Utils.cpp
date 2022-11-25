@@ -4,11 +4,11 @@
 #include <psp2/sysmodule.h>
 #include <psp2/io/stat.h>
 #include <Logger.h>
+#include "Config.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "image/stb_image.h"
 
-#define USER_AGENT "Spotify/8.6.84 iOS/15.1 (iPhone11,8)"
 
 struct MemoryStruct {
   char *memory;

@@ -23,24 +23,17 @@
 #include "GuiUtils.h"
 #include "Gui.h"
 #include "API.h"
+#include "Config.h"
 
 // TODO(michal4132):
-// - proper http downloader cleanup
+// - remove old http client init, cleanup
 // - pause ImGui in sleep mode
 // - settings screen
 // - make GUI global?
 // - fix crash caused by ImGui_ImplVitaGL_Shutdown when in system mode
-// - mDNS / ZeroConf
 // - mainline cspot
 // - system music volume control
 // - system music title, controls
-
-// DEBUG
-// #define CRASH_TEST
-
-#define DEVICE_NAME           "PS Vita (CSpot)"
-#define CREDENTIALS_FILE_NAME "ux0:data/cspot/authBlob.json"
-#define CONFIG_FILE_NAME      "ux0:data/cspot/config.json"
 
 std::shared_ptr<ConfigJSON> configMan;
 std::shared_ptr<CliFile> file;

@@ -5,6 +5,13 @@
 #include <string>
 #include "Screen.h"
 
+struct Playlist {
+    std::string name;
+    std::string uri;
+    std::vector<std::string> tracks;
+    bool tracks_loaded;
+};
+
 class PlaybackScreen: public Screen {
  public:
     explicit PlaybackScreen(GUI *gui);
@@ -33,10 +40,7 @@ class PlaybackScreen: public Screen {
     std::string imageUrl;
     bool isPaused;
 
-    std::vector<std::string> playlists;
-    std::vector<std::string> playlist_uri;
-    std::vector<std::vector<std::string>> tracks;
-    std::vector<bool> tracks_loaded;
+    std::vector<Playlist> playlists;
     Submenu submenu = Submenu::LOG;
     int cover_art_width = 0;
     int cover_art_height = 0;

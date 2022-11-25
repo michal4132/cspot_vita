@@ -1,6 +1,7 @@
 #include "API.h"
 #include "Utils.h"
 #include <Logger.h>
+#include "Config.h"
 
 void API::set_token(std::string _token) {
     token = _token;

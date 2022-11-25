@@ -4,6 +4,8 @@
 #include "GuiUtils.h"
 #include <JSONObject.h>
 #include "Utils.h"
+#include "Config.h"
+
 
 PlaybackScreen::PlaybackScreen(GUI *gui) : Screen(gui) {
     LoadTextureFromFile("app0:cover_art.png", &cover_art_tex, &cover_art_width, &cover_art_height);
@@ -110,18 +112,13 @@ void PlaybackScreen::drawPlayer() {
 
 void PlaybackScreen::getTracks(uint16_t index) {
     CSPOT_LOG(debug, "Get tracks for playlist: %d", index);
-    std::string uri = playlist_uri[index];
+    std::string uri = playlists[index].uri;
 
     if (!uri.starts_with(SPOTIFY_PLAYLIST_HEADER)) {
         return;
     }
     uri.erase(0, strlen(SPOTIFY_PLAYLIST_HEADER));
-
-    if (index >= tracks.size()) {
-        tracks.resize(index + 1);
-    } else {
-        tracks[index].clear();
-    }
+    playlists[index].tracks.clear();
 
     bool next = true;
     uint32_t pos = 0;
@@ -133,13 +130,15 @@ void PlaybackScreen::getTracks(uint16_t index) {
 
         if (json_len <= 0) {
             CSPOT_LOG(error, "error requesting songs from playlist");
-            tracks[index].push_back("No tracks");
+            playlists[index].tracks_loaded = true;
+            playlists[index].tracks.push_back("No tracks");
             return;
         }
 
         cJSON *root = cJSON_Parse((const char *) json_data);
         if (!cJSON_HasObjectItem(root, "items")) {
-            tracks[index].push_back("No tracks");
+            playlists[index].tracks_loaded = true;
+            playlists[index].tracks.push_back("No tracks");
             return;
         }
         cJSON *json_next = cJSON_GetObjectItem(root, "next");
@@ -149,7 +148,7 @@ void PlaybackScreen::getTracks(uint16_t index) {
         for (uint32_t i = 0; i < tracks_in_chunk; i++) {
             cJSON *item = cJSON_GetArrayItem(json_items, i);
             cJSON *track = cJSON_GetObjectItem(item, "track");
-            tracks[index].push_back(std::string(cJSON_GetObjectItem(track, "name")->valuestring));
+            playlists[index].tracks.push_back(std::string(cJSON_GetObjectItem(track, "name")->valuestring));
             pos++;
         }
 
@@ -157,13 +156,13 @@ void PlaybackScreen::getTracks(uint16_t index) {
         cJSON_Delete(root);
         free(json_data);
     }
+    playlists[index].tracks_loaded = true;
     CSPOT_LOG(debug, "Got %d tracks", pos);
 }
 
 void PlaybackScreen::getPlaylists() {
     CSPOT_LOG(debug, "Get playlists");
     playlists.clear();
-    playlist_uri.clear();
 
     bool next = true;
     uint32_t pos = 0;
@@ -187,8 +186,8 @@ void PlaybackScreen::getPlaylists() {
 
         for (uint32_t i = 0; i < playlists_in_chunk; i++) {
             cJSON *item = cJSON_GetArrayItem(json_items, i);
-            playlists.push_back(std::string(cJSON_GetObjectItem(item, "name")->valuestring));
-            playlist_uri.push_back(std::string(cJSON_GetObjectItem(item, "uri")->valuestring));
+            playlists.push_back({std::string(cJSON_GetObjectItem(item, "name")->valuestring),
+                                    std::string(cJSON_GetObjectItem(item, "uri")->valuestring), {}, false});
             pos++;
         }
 
@@ -215,26 +214,24 @@ void PlaybackScreen::drawSubmenu() {
             break;
         case Submenu::PLAYLISTS:
             for (uint16_t i = 0; i < playlists.size(); i++) {
-                if (ImGui::TreeNode((void*)(intptr_t)i, playlists[i].c_str())) {
+                if (ImGui::TreeNode((void*)(intptr_t)i, playlists[i].name.c_str())) {
                     // track list not yet loaded
-                    if (i >= tracks.size() || tracks[i].size() == 0) {
-                        CSPOT_LOG(debug, "request track list for playlist: %s", playlists[i].c_str());
+                    if (!playlists[i].tracks_loaded) {
+                        CSPOT_LOG(debug, "request track list for playlist: %s", playlists[i].name.c_str());
                         getTracks(i);
                     }
 
                     // play button
                     if (ImGui::Button("Play")) {
                         gui->activateDevice();
-                        gui->api.play_by_uri(playlist_uri[i], 0, 0);
+                        gui->api.play_by_uri(playlists[i].uri, 0, 0);
                     }
 
                     // each song in playlist
-                    if (i < tracks.size()) {
-                        for (uint32_t track_offset = 0; track_offset < tracks[i].size(); track_offset++) {
-                            if (ImGui::Button(tracks[i][track_offset].c_str())) {
-                                gui->activateDevice();
-                                gui->api.play_by_uri(playlist_uri[i], track_offset, 0);
-                            }
+                    for (uint32_t track_offset = 0; track_offset < playlists[i].tracks.size(); track_offset++) {
+                        if (ImGui::Button(playlists[i].tracks[track_offset].c_str())) {
+                            gui->activateDevice();
+                            gui->api.play_by_uri(playlists[i].uri, track_offset, 0);
                         }
                     }
                     ImGui::TreePop();
@@ -244,10 +241,15 @@ void PlaybackScreen::drawSubmenu() {
         case Submenu::SETTINGS:
             if (ImGui::Button("Refresh playlists")) {
                 playlists.clear();
-                playlist_uri.clear();
             }
             if (ImGui::Button("Refresh tracks")) {
-                tracks.clear();
+                for (std::vector<Playlist>::iterator it = playlists.begin(); it != playlists.end(); ++it) {
+                    it->tracks.clear();
+                }
+            }
+            if (ImGui::Button("Logout")) {
+                gui->isRunning = false;
+                remove(CREDENTIALS_FILE_NAME);
             }
             break;
         default:
@@ -282,7 +284,7 @@ void PlaybackScreen::drawButtons() {
     ImGui::SameLine();
 
     if (StyleButton(ICON_FA_MUSIC, MENU_BUTTON_SIZE, submenu == Submenu::PLAYLISTS)) {
-        if (playlist_uri.size() == 0) {
+        if (playlists.size() == 0) {
             getPlaylists();
         }
         submenu = Submenu::PLAYLISTS;
