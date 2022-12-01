@@ -3,10 +3,8 @@
 #include <psp2/audioout.h>
 #include <psp2/bgapputil.h>
 #include <psp2/ctrl.h>
-#include <psp2/kernel/processmgr.h>
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/io/fcntl.h>
-#include <imgui_vita.h>
 #include <vitaGL.h>
 
 #include "Paf.h"
@@ -61,6 +59,15 @@ SceVoid watch_dog(SceSize _args, void *_argp) {
             case SCE_APP_EVENT_REQUEST_QUIT:
                 gui->isRunning = false;
                 return;
+            case SCE_APP_EVENT_ON_DEACTIVATE:
+                gui->paused = true;
+                break;
+            case SCE_APP_EVENT_ON_ACTIVATE:
+                gui->paused = false;
+                break;
+            default:
+                // CSPOT_LOG(debug, "watchdog event: %x", appEvent.event);
+                break;
         }
         sceKernelDelayThread(1000000);
         sceKernelPowerTick(SCE_KERNEL_POWER_TICK_DISABLE_AUTO_SUSPEND);

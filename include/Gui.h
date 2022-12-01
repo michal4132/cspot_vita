@@ -15,6 +15,7 @@ class GUI {
     void init();
     void start();
     std::atomic<bool> isRunning = true;
+    std::atomic<bool> paused = true;
     ImFont *font;
     ImFont *playback_icon_font;
     ImFont *icon_font;

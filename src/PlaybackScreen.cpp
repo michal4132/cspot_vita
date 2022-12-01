@@ -215,7 +215,6 @@ void PlaybackScreen::drawSubmenu() {
         case Submenu::PLAYLISTS:
             for (uint16_t i = 0; i < playlists.size(); i++) {
                 if (ImGui::TreeNode((void*)(intptr_t)i, playlists[i].name.c_str())) {
-                    // track list not yet loaded
                     if (!playlists[i].tracks_loaded) {
                         CSPOT_LOG(debug, "request track list for playlist: %s", playlists[i].name.c_str());
                         getTracks(i);
@@ -251,6 +250,7 @@ void PlaybackScreen::drawSubmenu() {
                 gui->isRunning = false;
                 remove(CREDENTIALS_FILE_NAME);
             }
+
             break;
         default:
             break;

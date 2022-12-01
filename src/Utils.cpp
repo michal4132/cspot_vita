@@ -110,7 +110,9 @@ int download(const char *url, uint8_t **return_buffer, const char *method, std::
     res = curl_easy_perform(curl_handle);
     int httpresponsecode = 0;
     curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &httpresponsecode);
-    CSPOT_LOG(debug, "response code: %d", httpresponsecode);
+    if (httpresponsecode != 200) {
+        CSPOT_LOG(debug, "response code: %d", httpresponsecode);
+    }
 
     if (res != CURLE_OK) {
         CSPOT_LOG(error, "curl_easy_perform() failed: %s", curl_easy_strerror(res));
