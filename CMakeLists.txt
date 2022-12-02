@@ -13,13 +13,6 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   endif()
 endif()
 
-add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/boot_param.bin
-  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bootparam.py app_memsize 0x00400000 attribute 0x00 ${CMAKE_CURRENT_BINARY_DIR}/boot_param.bin
-)
-
-add_custom_target(run ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/boot_param.bin)
-
 project(cspot_vita C CXX)
 include("${VITASDK}/share/vita.cmake" REQUIRED)
 
@@ -102,7 +95,8 @@ target_link_libraries(${PROJECT_NAME}
 vita_create_self(eboot.bin
   ${PROJECT_NAME}
   UNSAFE
- BOOT_PARAM ${CMAKE_CURRENT_BINARY_DIR}/boot_param.bin
+  ATTRIBUTE 0x00
+  MEMSIZE 0x00400000
 )
 
 set(VITA_MKSFOEX_FLAGS "${VITA_MKSFOEX_FLAGS} -d ATTRIBUTE=17338376 -d ATTRIBUTE_MINOR=17 -s CATEGORY=gdc")
