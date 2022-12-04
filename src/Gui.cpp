@@ -75,7 +75,7 @@ void GUI::start() {
             // bool show = true;
             // ImGui::ShowDemoWindow(&show);
 
-            while (paused) {
+            while (paused && isRunning) {
                 sceKernelDelayThread(500000);
             }
 
