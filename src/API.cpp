@@ -25,9 +25,9 @@ void API::play_by_uri(std::string uri, uint32_t offset_pos, uint32_t position_ms
     post_data += std::to_string(position_ms);
     post_data += "}";
     uint8_t *buf;
-    Headers headers = { {"Accept", "application/json"},
-                        {"Content-Type", "application/json"},
-                        {"Authorization", "Bearer " + token} };
+    Headers headers = { {"Accept: application/json"},
+                        {"Content-Type: application/json"},
+                        {"Authorization: Bearer " + token} };
     int len = download(url.c_str(), &buf, "PUT", post_data, headers);
     if (len > 0) {
         CSPOT_LOG(info, "play_by_uri response: %.*s", len, buf);
@@ -41,9 +41,9 @@ int API::get_current_users_playlists(uint8_t **buf, uint16_t limit, uint16_t off
         return -1;
     }
 
-    Headers headers = { {"Accept", "application/json"},
-                        {"Content-Type", "application/json"},
-                        {"Authorization", "Bearer " + token} };
+    Headers headers = { {"Accept: application/json"},
+                        {"Content-Type: application/json"},
+                        {"Authorization: Bearer " + token} };
 
     std::string url = SPOTIFY_API_GET_USERS_PLAYLISTS;
     url += "?limit=";
@@ -67,9 +67,9 @@ int API::get_playlist_items(uint8_t **buf, std::string playlist_id, std::string 
         return -1;
     }
 
-    Headers headers = { {"Accept", "application/json"},
-                        {"Content-Type", "application/json"},
-                        {"Authorization", "Bearer " + token} };
+    Headers headers = { {"Accept: application/json"},
+                        {"Content-Type: application/json"},
+                        {"Authorization: Bearer " + token} };
 
     std::string url = "";
     if (playlist_id.starts_with("https://api.spotify.com/v1/playlists/")) {
@@ -102,9 +102,9 @@ int API::get_available_devices(uint8_t **buf) {
         return -1;
     }
 
-    Headers headers = { {"Accept", "application/json"},
-                        {"Content-Type", "application/json"},
-                        {"Authorization", "Bearer " + token} };
+    Headers headers = { {"Accept: application/json"},
+                        {"Content-Type: application/json"},
+                        {"Authorization: Bearer " + token} };
 
     int len = download(SPOTIFY_API_GET_AVAILABLE_DEVICES, buf, "GET", "", headers);
     if (len <= 0) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <imgui_vita.h>
+#include <vitaGL.h>
 #include <string>
 
 #define INPUT_USED_COLOR              IM_COL32(190, 190, 190, 255)

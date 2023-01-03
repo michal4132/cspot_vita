@@ -1,6 +1,7 @@
 #pragma once
 
 #include <imgui_vita.h>
+#include <vitaGL.h>
 #include <vector>
 #include <string>
 #include "Screen.h"

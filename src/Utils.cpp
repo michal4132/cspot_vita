@@ -33,26 +33,6 @@ static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, voi
     return realsize;
 }
 
-bool init_downloader() {
-    int res, tpl, conn, req;
-    SceUInt64 length = 0;
-
-    res = sceHttpInit(0x200000);
-    if (res < 0) {
-        CSPOT_LOG(error, "sceHttpInit failed (0x%X)\n", res);
-        return false;
-    }
-
-    res = sceSslInit(0x200000);
-    if (res < 0) {
-        CSPOT_LOG(error, "sceSslInit failed (0x%X)\n", res);
-        sceHttpTerm();
-        return false;
-    }
-    CSPOT_LOG(error, "Init ok");
-    return true;
-}
-
 std::string cover_art_path(std::string url) {
     size_t found = url.find_last_of("/\\");
     std::string path = "ux0:data/cspot/cache/" + url.substr(found+1);
@@ -102,7 +82,7 @@ int download(const char *url, uint8_t **return_buffer, const char *method, std::
 
     struct curl_slist *headerchunk = NULL;
     for (auto it : headers) {
-        headerchunk = curl_slist_append(headerchunk, (it.first + ": " + it.second).c_str());
+        headerchunk = curl_slist_append(headerchunk, it.c_str());
     }
     res = curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, headerchunk);
 
@@ -116,7 +96,7 @@ int download(const char *url, uint8_t **return_buffer, const char *method, std::
 
     if (res != CURLE_OK) {
         CSPOT_LOG(error, "curl_easy_perform() failed: %s", curl_easy_strerror(res));
-        // TODO(michal4132): need free chunk.memory???
+        free(chunk.memory);
         *return_buffer = NULL;
         chunk.size = 0;
     } else {
@@ -207,31 +187,10 @@ int is_dir(const char *path) {
     return SCE_S_ISDIR(stat.st_mode);
 }
 
-void init_network() {
-    sceSysmoduleLoadModule(SCE_SYSMODULE_JSON);
+bool init_network() {
     sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
 
     int res;
-    SceUInt32 paf_init_param[6];
-    SceSysmoduleOpt sysmodule_opt;
-
-    paf_init_param[0] = 0x4000000;
-    paf_init_param[1] = 0;
-    paf_init_param[2] = 0;
-    paf_init_param[3] = 0;
-    paf_init_param[4] = 0x400;
-    paf_init_param[5] = 1;
-
-    res = ~0;
-    sysmodule_opt.flags  = 0;
-    sysmodule_opt.result = &res;
-
-    sceSysmoduleLoadModuleInternalWithArg(SCE_SYSMODULE_INTERNAL_PAF,
-                                          sizeof(paf_init_param), &paf_init_param, &sysmodule_opt);
-
-    sceSysmoduleLoadModule(SCE_SYSMODULE_SSL);
-    sceSysmoduleLoadModule(SCE_SYSMODULE_HTTPS);
-
 
     SceNetInitParam net_init_param;
     net_init_param.size = 0x200000;
@@ -240,8 +199,7 @@ void init_network() {
     SceUID memid = sceKernelAllocMemBlock("SceNetMemory", 0x0C20D060, net_init_param.size, NULL);
     if (memid < 0) {
         CSPOT_LOG(error, "sceKernelAllocMemBlock failed (0x%X)\n", memid);
-        return;
-        // return memid;
+        return false;
     }
 
     sceKernelGetMemBlockBase(memid, &net_init_param.memory);
@@ -249,21 +207,20 @@ void init_network() {
     res = sceNetInit(&net_init_param);
     if (res < 0) {
         CSPOT_LOG(error, "sceNetInit failed (0x%X)\n", res);
-        return;
-        // goto free_memblk;
+        return false;
     }
 
     res = sceNetCtlInit();
     if (res < 0) {
         CSPOT_LOG(error, "sceNetCtlInit failed (0x%X)\n", res);
-        return;
-        // goto net_term;
+        return false;
     }
 
-    init_downloader();
+    return true;
 }
 
 void term_network() {
-    sceNetTerm();
     sceNetCtlTerm();
+    sceNetTerm();
+    sceSysmoduleUnloadModule(SCE_SYSMODULE_NET);
 }

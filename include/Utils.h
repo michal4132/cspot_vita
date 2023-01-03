@@ -1,6 +1,7 @@
 #pragma once
 
 #include <imgui_vita.h>
+#include <vitaGL.h>
 #include <string>
 #include <vector>
 #include <utility>
@@ -31,13 +32,13 @@ extern "C" {
 #define SCE_APP_EVENT_UNK2                  (0x30000003)
 
 // HTTP Headers
-typedef std::vector<std::pair<std::string, std::string>> Headers;
+typedef std::vector<std::string> Headers;
 
 bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height);
 bool LoadTextureFromMemory(const uint8_t* buffer, uint32_t length,
                            GLuint* out_texture, int* out_width, int* out_height);
 int is_dir(const char *path);
-void init_network();
+bool init_network();
 void term_network();
 int download(const char *url, uint8_t **return_buffer, const char *method = "GET",
                         std::string post_data = "", Headers headers = {});

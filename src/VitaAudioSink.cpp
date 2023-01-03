@@ -65,7 +65,7 @@ void VitaAudioSink::feedPCMFrames(const uint8_t *buffer, size_t bytes) {
             if (data_len[write_buffer] == BUFFER_SIZE) {
                 write_buffer = (write_buffer ? 0:1);
             }
-        } 
+        }
     }
 }
 
