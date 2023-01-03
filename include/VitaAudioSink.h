@@ -2,6 +2,8 @@
 
 #include "AudioSink.h"
 
+void vita_clear_buffer();
+
 class VitaAudioSink : public AudioSink {
  public:
     VitaAudioSink();

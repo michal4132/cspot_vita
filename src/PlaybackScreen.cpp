@@ -246,6 +246,9 @@ void PlaybackScreen::drawSubmenu() {
                     it->tracks.clear();
                 }
             }
+            if (ImGui::Button("Exit")) {
+                gui->isRunning = false;
+            }
             if (ImGui::Button("Logout")) {
                 gui->isRunning = false;
                 remove(CREDENTIALS_FILE_NAME);

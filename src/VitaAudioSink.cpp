@@ -1,4 +1,5 @@
 #include "VitaAudioSink.h"
+#include "CircularBuffer.h"
 #include "Logger.h"
 
 #include <psp2/audioout.h>
@@ -6,26 +7,33 @@
 #include <psp2/appmgr.h>
 #include <cstring>
 
-#define BUFFER_SIZE       3840
-#define VITA_DECODE_SIZE (BUFFER_SIZE / 4)
+#define ONE_BUFFER_SIZE       2048
+#define CIRCULAR_BUFFER_SIZE  ONE_BUFFER_SIZE * 2
+#define VITA_DECODE_SIZE      (ONE_BUFFER_SIZE / 4)
 
-static uint8_t g_buffer[2][BUFFER_SIZE];
-static uint32_t data_len[2] = {0};
-static uint8_t end_flag = 0;
-static uint8_t read_buffer = 0;
-static uint8_t write_buffer = 0;
 static int port;
+static int end_flag = 0;
+static CircularBuffer buffer(CIRCULAR_BUFFER_SIZE);
+
+void vita_clear_buffer() {
+    buffer.emptyBuffer();
+}
 
 static int feedBlocking() {
+    static uint8_t current_buffer[ONE_BUFFER_SIZE];
     while (end_flag == 0) {
-        if (data_len[read_buffer] == BUFFER_SIZE) {
-            int res = sceAudioOutOutput(port, g_buffer[read_buffer]);
+        if (buffer.size() >= ONE_BUFFER_SIZE) {
+            auto readNumber = buffer.read(current_buffer, ONE_BUFFER_SIZE);
+            if (readNumber != ONE_BUFFER_SIZE) {
+                CSPOT_LOG(error, "buffer error");
+            }
+
+            int res = sceAudioOutOutput(port, current_buffer);
             if (res < 0) {
                  CSPOT_LOG(error, "sceAudioOutOutput error");
             }
-            data_len[read_buffer] = 0;
-
-            read_buffer = (read_buffer ? 0:1);
+        } else {
+            sceKernelDelayThread(10000);
         }
     }
     return 0;
@@ -49,22 +57,14 @@ VitaAudioSink::~VitaAudioSink() {
     sceKernelWaitThreadEnd(threadid, NULL, NULL);
 }
 
-void VitaAudioSink::feedPCMFrames(const uint8_t *buffer, size_t bytes) {
-    uint32_t pos = 0;
-    while (pos < bytes) {
-        if (data_len[write_buffer] < BUFFER_SIZE) {
-            uint32_t buffer_space = BUFFER_SIZE - data_len[write_buffer];
-            uint32_t aval_data = bytes - pos;
-            uint32_t to_write = std::min(buffer_space, aval_data);
+void VitaAudioSink::feedPCMFrames(const uint8_t *buf, size_t bytes) {
+    size_t bytesWritten = 0;
+    while (bytesWritten < bytes) {
+        auto bwrite = buffer.write(buf + bytesWritten, bytes - bytesWritten);
+        bytesWritten += bwrite;
 
-            memcpy(g_buffer[write_buffer]+data_len[write_buffer], buffer+pos, to_write);
-            pos += to_write;
-
-            data_len[write_buffer] += to_write;
-
-            if (data_len[write_buffer] == BUFFER_SIZE) {
-                write_buffer = (write_buffer ? 0:1);
-            }
+        if (bwrite == 0) {
+            sceKernelDelayThread(10000);
         }
     }
 }

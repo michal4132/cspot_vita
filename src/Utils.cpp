@@ -222,5 +222,4 @@ bool init_network() {
 void term_network() {
     sceNetCtlTerm();
     sceNetTerm();
-    sceSysmoduleUnloadModule(SCE_SYSMODULE_NET);
 }

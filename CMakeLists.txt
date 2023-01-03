@@ -47,7 +47,7 @@ add_executable(${PROJECT_NAME}
   src/Keyboard.cpp
   src/CliFile.cpp
   src/VitaAudioSink.cpp
-  src/imgui_demo.cpp
+  src/CircularBuffer.cpp
   src/Gui.cpp
   src/PlaybackScreen.cpp
   src/LoginScreen.cpp
@@ -57,7 +57,6 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   SceBgAppUtil_stub
   SceNotificationUtil_stub
-  ScePaf_stub
   pthread
   cspot
   m
@@ -72,20 +71,16 @@ target_link_libraries(${PROJECT_NAME}
   SceAppMgr_stub
   SceAppUtil_stub
   SceCommonDialog_stub
-  SceHttp_stub
-  SceSsl_stub
   SceCtrl_stub
   SceDisplay_stub
   SceGxm_stub
   SceKernelDmacMgr_stub
-  SceLibJson_stub
   SceLibKernel_stub
   ScePower_stub
   SceShaccCg_stub
   SceShaccCgExt
   SceSysmodule_stub
   SceTouch_stub
-  SceLibJson_stub
   taihen_stub
   ${CURL_LIBRARIES}
   ${OPENSSL_LIBRARIES}

@@ -24,8 +24,6 @@
 #include "Config.h"
 
 // TODO(michal4132):
-// - remove old http client init, cleanup
-// - pause ImGui in sleep mode
 // - settings screen
 // - make GUI global?
 // - fix crash caused by ImGui_ImplVitaGL_Shutdown when in system mode
@@ -46,6 +44,7 @@ SceVoid watch_dog(SceSize _args, void *_argp) {
     GUI* gui = *((GUI**)_argp);
 
 #if defined(CRASH_TEST)
+    gui->paused = false;
     sceKernelDelayThread(15000000);
     gui->isRunning = false;
     return;
@@ -126,6 +125,10 @@ int start_cspot(SceSize _args, void *_argp) {
                     TrackInfo track = std::get<TrackInfo>(event.data);
                     ((PlaybackScreen*) gui->playback_screen)->setTrack(track.name, track.album,
                                                                             track.artist, track.imageUrl);
+                    break;
+                }
+                case CSpotEventType::PLAYBACK_START: {
+                    vita_clear_buffer();
                     break;
                 }
                 case CSpotEventType::PLAY_PAUSE: {
