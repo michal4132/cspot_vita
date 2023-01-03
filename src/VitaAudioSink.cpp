@@ -7,17 +7,13 @@
 #include <psp2/appmgr.h>
 #include <cstring>
 
-#define ONE_BUFFER_SIZE       2048
-#define CIRCULAR_BUFFER_SIZE  ONE_BUFFER_SIZE * 2
+#define ONE_BUFFER_SIZE       4096
+#define CIRCULAR_BUFFER_SIZE  ONE_BUFFER_SIZE * 4
 #define VITA_DECODE_SIZE      (ONE_BUFFER_SIZE / 4)
 
 static int port;
 static int end_flag = 0;
 static CircularBuffer buffer(CIRCULAR_BUFFER_SIZE);
-
-void vita_clear_buffer() {
-    buffer.emptyBuffer();
-}
 
 static int feedBlocking() {
     static uint8_t current_buffer[ONE_BUFFER_SIZE];
