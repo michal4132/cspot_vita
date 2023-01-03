@@ -8,7 +8,7 @@
 #include <cstring>
 
 #define ONE_BUFFER_SIZE       2048
-#define CIRCULAR_BUFFER_SIZE  ONE_BUFFER_SIZE * 2
+#define CIRCULAR_BUFFER_SIZE  ONE_BUFFER_SIZE * 4
 #define VITA_DECODE_SIZE      (ONE_BUFFER_SIZE / 4)
 
 static int port;

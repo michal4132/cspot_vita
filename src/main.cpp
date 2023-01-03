@@ -81,7 +81,7 @@ int start_cspot(SceSize _args, void *_argp) {
     GUI* gui = *((GUI**)_argp);
 
     CSPOT_LOG(info, "Creating player");
-    auto session = std::make_unique<Session>();
+    auto session = std::make_unique<Session>(configMan);
     session->connectWithRandomAp();
     auto token = session->authenticate(blob);
 
@@ -99,7 +99,7 @@ int start_cspot(SceSize _args, void *_argp) {
             sceKernelDelayThread(10000);
         }
 
-        spircController = std::make_shared<SpircController>(mercuryManager, blob->username, audioSink);
+        spircController = std::make_shared<SpircController>(mercuryManager, blob->username, audioSink, configMan);
 
         // Request token for player control
         mercuryCallback responseLambda = [=](std::unique_ptr<MercuryResponse> res) {
@@ -150,10 +150,10 @@ int start_cspot(SceSize _args, void *_argp) {
         };
 
         gui->activateDevice = []() {
-            if (!spircController->state->isActive()) {
-                spircController->state->setActive(true);
-            }
-            return spircController->notify();
+            // if (!spircController->state->isActive()) {
+            //     spircController->state->setActive(true);
+            // }
+            // return spircController->notify();
         };
 
         gui->playToggleCallback = []() {
