@@ -35,8 +35,10 @@ namespace bell
         /// <returns> True if the queue is empty. </returns>
         bool isEmpty() const
         {
-            // std::unique_lock<std::mutex> lk(m_mutex);
-            return m_queue.empty();
+            sceKernelLockMutex(mutexid, 0, 0);
+            bool tmp = m_queue.empty();
+            sceKernelUnlockMutex(mutexid, 0);
+            return tmp;
         }
         /// <summary> Pop element from queue. </summary>
         /// <param name="popped_value"> [in,out] Element. </param>
@@ -67,8 +69,10 @@ namespace bell
                     //   { return !m_queue.empty() || m_forceExit.load(); });
             uint32_t us = 0;
             sceKernelWaitCond(m_cv, &us);
-            if (m_forceExit.load())
+            if (m_forceExit.load()) {
+                sceKernelUnlockMutex(mutexid, 0);
                 return false;
+            }
             popped_value = m_queue.front();
             m_queue.pop();
             sceKernelUnlockMutex(mutexid, 0);
@@ -85,10 +89,14 @@ namespace bell
                         //   { return !m_queue.empty() || m_forceExit.load(); });
             uint32_t us = milliseconds * 1000;
             sceKernelWaitCond(m_cv, &us);
-            if (m_forceExit.load())
+            if (m_forceExit.load()) {
+                sceKernelUnlockMutex(mutexid, 0);
                 return false;
-            if (m_queue.empty())
+            }
+            if (m_queue.empty()) {
+                sceKernelUnlockMutex(mutexid, 0);
                 return false;
+            }
             popped_value = m_queue.front();
             m_queue.pop();
             sceKernelUnlockMutex(mutexid, 0);
@@ -97,7 +105,10 @@ namespace bell
         /// <summary> Queue size. </summary>
         int size()
         {
-            return static_cast<int>(m_queue.size());
+            sceKernelLockMutex(mutexid, 0, 0);
+            auto tmp = static_cast<int>(m_queue.size());
+            sceKernelUnlockMutex(mutexid, 0);
+            return tmp;
         }
         /// <summary> Free the queue and force stop. </summary>
         void clear()
