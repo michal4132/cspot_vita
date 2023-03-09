@@ -19,3 +19,6 @@ A Spotify player for PS Vita.
 mkdir build && cd build
 cmake .. && make
 ```
+
+### Disclaimer
+Using this code to connect to Spotify's API may be prohibited by their terms of service. Use at your own risk. The developers are not responsible for any negative consequences, including account closure.
